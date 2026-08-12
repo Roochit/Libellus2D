@@ -15,26 +15,48 @@ public class PlayerMovementCS : MonoBehaviour
     private bool isDashing = false;
     private bool canDash = true;  
 
+    private Rigidbody2D rb;
+    private PlayerHealthCS playerHealth;
+    private Vector3 moveInput = Vector3.zero;
+
+    private void Awake()
+    {
+        rb = GetComponent<Rigidbody2D>();
+        playerHealth = GetComponent<PlayerHealthCS>();
+    }
+
     private void Update()
     {
         if (isDashing) {
             return;
         }
 
-        HandleDirectMovement();
+        HandleMovementInput();
         HandleDashInput();
     }
 
-    private void HandleDirectMovement()
+    private void FixedUpdate()
     {
-        Vector3 moveInput = Vector3.zero;
+        if (isDashing) {
+            return;
+        }
 
+        // ป้องกันการทับซ้อนความเร็วถ้าผู้เล่นอยู่ในสถานะกระเด็น (Knockback)
+        if (playerHealth != null && playerHealth.IsKnockedBack) {
+            return;
+        }
+
+        MovePlayer();
+    }
+
+    private void HandleMovementInput()
+    {
+        moveInput = Vector3.zero;
 
         if (Input.GetKey(KeyCode.W))
         {
             moveInput.y += 1f;
         }
-
 
         if (Input.GetKey(KeyCode.S))
         {
@@ -46,7 +68,6 @@ public class PlayerMovementCS : MonoBehaviour
             moveInput.x += 1f;
         }
 
-
         if (Input.GetKey(KeyCode.A))
         {
             moveInput.x -= 1f;
@@ -57,14 +78,19 @@ public class PlayerMovementCS : MonoBehaviour
             moveInput.Normalize();
             lastMoveDirection = moveInput; 
         }
+    }
 
-
-        if (moveInput.sqrMagnitude > 0.01f)
+    private void MovePlayer()
+    {
+        if (rb != null)
         {
-            moveInput.Normalize();
+            rb.velocity = moveInput * moveSpeed;
         }
-
-        transform.position += moveInput * moveSpeed * Time.deltaTime;
+        else
+        {
+            // fallback หากไม่มี Rigidbody2D ในตัวละคร
+            transform.position += moveInput * moveSpeed * Time.deltaTime;
+        }
     }
 
     private void HandleDashInput()
@@ -81,8 +107,29 @@ public class PlayerMovementCS : MonoBehaviour
         canDash = false;
         isDashing = true;
 
+        // รีเซ็ตความเร็วของ Rigidbody ก่อนเริ่มพุ่ง
+        if (rb != null) rb.velocity = Vector2.zero;
+
         Vector3 startPosition = transform.position;
         Vector3 targetPosition = startPosition + (lastMoveDirection * dashDistance);
+
+        // จำกัดขอบเขตการแดชไม่ให้ออกนอกแมป (ตรวจจับสิ่งกีดขวางล่วงหน้า)
+        Collider2D myCollider = GetComponent<Collider2D>();
+        bool originalEnabled = myCollider != null ? myCollider.enabled : true;
+        if (myCollider != null) myCollider.enabled = false;
+
+        // ยิงเรย์เพื่อดูว่าข้างหน้ามีกำแพงหรือไม่
+        RaycastHit2D hit = Physics2D.Raycast(startPosition, lastMoveDirection, dashDistance);
+        if (myCollider != null) myCollider.enabled = originalEnabled;
+
+        // ถ้าชนสิ่งกีดขวางแข็ง (ไม่ใช่ Trigger)
+        if (hit.collider != null && !hit.collider.isTrigger)
+        {
+            // ถอยจุดหมายกลับมาเท่าระยะรัศมีตัวละครประมาณ 0.45f เพื่อไม่ให้ตัวผู้เล่นสไลด์จมกำแพง
+            float hitDistance = hit.distance;
+            float safeDistance = Mathf.Max(0f, hitDistance - 0.45f);
+            targetPosition = startPosition + (lastMoveDirection * safeDistance);
+        }
 
         float elapsedTime = 0f;
 
@@ -104,6 +151,6 @@ public class PlayerMovementCS : MonoBehaviour
         canDash = true;
     }
 
-    // Public Property ให้สคริปต์อื่นมาอ่านสถานะได้ (เช่น เอาไปเปิดอมตะ iFrame ในอนาคต)
+    // Public Property ให้สคริปต์อื่นมาอ่านสถานะได้
     public bool IsDashing => isDashing;
 }

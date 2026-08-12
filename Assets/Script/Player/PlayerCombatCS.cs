@@ -50,6 +50,7 @@ public class PlayerCombatCS : MonoBehaviour
         // คลิกซ้าย หรือ ปุ่ม J -> ฟัน
         if ((Input.GetMouseButtonDown(0) || Input.GetKeyDown(KeyCode.J)) && Time.time >= nextMeleeTime)
         {
+            FaceNearestEnemy(); // หันหน้าไปหาศัตรูที่ใกล้ที่สุดก่อนฟัน
             PerformMeleeAttack();
             nextMeleeTime = Time.time + meleeCooldown;
         }
@@ -57,8 +58,43 @@ public class PlayerCombatCS : MonoBehaviour
         // คลิกขวา หรือ ปุ่ม K -> ยิง
         if ((Input.GetMouseButtonDown(1) || Input.GetKeyDown(KeyCode.K)) && Time.time >= nextRangedTime)
         {
+            FaceNearestEnemy(); // หันหน้าไปหาศัตรูที่ใกล้ที่สุดก่อนยิง
             PerformRangedAttack();
             nextRangedTime = Time.time + rangedCooldown;
+        }
+    }
+
+    private void FaceNearestEnemy()
+    {
+        // ค้นหาศัตรูทั้งหมดในฉากที่มีคลาส EnemyCS
+        EnemyCS[] enemies = FindObjectsOfType<EnemyCS>();
+        if (enemies == null || enemies.Length == 0) return;
+
+        EnemyCS closestEnemy = null;
+        float closestDistance = float.MaxValue;
+        Vector3 playerPos = transform.position;
+
+        foreach (EnemyCS enemy in enemies)
+        {
+            if (enemy == null) continue;
+            float distance = Vector3.Distance(playerPos, enemy.transform.position);
+            if (distance < closestDistance)
+            {
+                closestDistance = distance;
+                closestEnemy = enemy;
+            }
+        }
+
+        // ถ้าพบศัตรูในฉาก ให้หันไปหาศัตรูคนนั้น
+        if (closestEnemy != null)
+        {
+            Vector3 direction = (closestEnemy.transform.position - playerPos).normalized;
+            direction.z = 0f; // ล็อกแกน Z สำหรับเกม 2D
+
+            if (direction.sqrMagnitude > 0.01f)
+            {
+                lastFacingDirection = direction.normalized;
+            }
         }
     }
 

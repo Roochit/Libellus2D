@@ -25,10 +25,14 @@ public class BulletCS : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        // ตรวจจับเมื่อชนศัตรู/กำแพง (สามารถใส่ Tag "Enemy" ในอนาคตได้)
-        if (collision.CompareTag("Enemy"))
+        // ตรวจจับเมื่อชนศัตรู (เช็คสคริปต์ EnemyCS โดยตรงเพื่อเลี่ยงการใช้ Tag "Enemy" ที่ไม่ได้สร้างในระบบ)
+        if (collision.GetComponent<EnemyCS>() != null)
         {
-            // ทำดาเมจศัตรูที่นี่
+            Destroy(gameObject);
+        }
+        else if (!collision.CompareTag("Player") && !collision.isTrigger)
+        {
+            // ทำลายกระสุนเมื่อชนกำแพง/สิ่งกีดขวาง (ไม่รวมผู้เล่นหรือ Trigger อื่นๆ)
             Destroy(gameObject);
         }
     }
