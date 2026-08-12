@@ -1,0 +1,89 @@
+using UnityEngine;
+
+public class PlayerCombatCS : MonoBehaviour
+{
+    [Header("Attack Offsets & Points")]
+    [SerializeField] private Transform attackPoint;
+    [SerializeField] private float attackOffsetDistance = 1.2f;
+
+    [Header("Melee Settings (ฟัน)")]
+    [SerializeField] private GameObject meleeHitboxPrefab;
+    [SerializeField] private float meleeDuration = 0.15f;
+    [SerializeField] private float meleeCooldown = 0.35f;
+    private float nextMeleeTime = 0f;
+
+    [Header("Ranged Settings (ยิง)")]
+    [SerializeField] private GameObject bulletPrefab;
+    [SerializeField] private float rangedCooldown = 0.25f;
+    private float nextRangedTime = 0f;
+
+    private Vector3 lastFacingDirection = Vector3.right; // Default หันขวา
+
+    private void Awake()
+    {
+        if (attackPoint == null) attackPoint = transform;
+    }
+
+    private void Update()
+    {
+        UpdateFacingDirection();
+        HandleCombatInput();
+    }
+
+    private void UpdateFacingDirection()
+    {
+        // อัปเดตทิศทางจากปุ่ม WASD ที่กดอยู่เพื่อใช้ระบุทิศทางการฟัน/ยิง
+        Vector3 inputDir = Vector3.zero;
+        if (Input.GetKey(KeyCode.W)) inputDir.y += 1f;
+        if (Input.GetKey(KeyCode.S)) inputDir.y -= 1f;
+        if (Input.GetKey(KeyCode.D)) inputDir.x += 1f;
+        if (Input.GetKey(KeyCode.A)) inputDir.x -= 1f;
+
+        if (inputDir.sqrMagnitude > 0.01f)
+        {
+            lastFacingDirection = inputDir.normalized;
+        }
+    }
+
+    private void HandleCombatInput()
+    {
+        // คลิกซ้าย หรือ ปุ่ม J -> ฟัน
+        if ((Input.GetMouseButtonDown(0) || Input.GetKeyDown(KeyCode.J)) && Time.time >= nextMeleeTime)
+        {
+            PerformMeleeAttack();
+            nextMeleeTime = Time.time + meleeCooldown;
+        }
+
+        // คลิกขวา หรือ ปุ่ม K -> ยิง
+        if ((Input.GetMouseButtonDown(1) || Input.GetKeyDown(KeyCode.K)) && Time.time >= nextRangedTime)
+        {
+            PerformRangedAttack();
+            nextRangedTime = Time.time + rangedCooldown;
+        }
+    }
+
+    private void PerformMeleeAttack()
+    {
+        if (meleeHitboxPrefab == null) return;
+
+        Vector3 spawnPosition = attackPoint.position + (lastFacingDirection * attackOffsetDistance);
+        float angle = Mathf.Atan2(lastFacingDirection.y, lastFacingDirection.x) * Mathf.Rad2Deg;
+        Quaternion spawnRotation = Quaternion.Euler(0, 0, angle);
+
+        GameObject meleeInstance = Instantiate(meleeHitboxPrefab, spawnPosition, spawnRotation, transform);
+        Destroy(meleeInstance, meleeDuration);
+    }
+
+    private void PerformRangedAttack()
+    {
+        if (bulletPrefab == null) return;
+ 
+        Vector3 spawnPosition = attackPoint.position + (lastFacingDirection * attackOffsetDistance);
+        GameObject bulletInstance = Instantiate(bulletPrefab, spawnPosition, Quaternion.identity);
+
+        if (bulletInstance.TryGetComponent<BulletCS>(out var bullet))
+        {
+            bullet.Setup(lastFacingDirection);
+        }
+    }
+}
