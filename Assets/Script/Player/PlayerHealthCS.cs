@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections;
 using System.IO;
+using UnityEngine.SceneManagement;
 
 public class PlayerHealthCS : MonoBehaviour
 {
@@ -37,6 +38,13 @@ public class PlayerHealthCS : MonoBehaviour
 
     private void Start()
     {
+        // หากเริ่มต้นเล่นด่านแรกสุด (LV01) ให้ล้างไฟล์เซฟเพื่อเริ่มใหม่ที่ 3 หัวใจเสมอ
+        string currentSceneName = SceneManager.GetActiveScene().name;
+        if (currentSceneName.Equals("LV01", System.StringComparison.OrdinalIgnoreCase))
+        {
+            DeleteSaveFile();
+        }
+
         LoadHealth(); // โหลดเลือดจากไฟล์เซฟ JSON
         UpdateHeartUI(); // อัปเดตแสดงผลรูปหัวใจเริ่มต้น
         if (spriteRenderer != null)
@@ -261,8 +269,8 @@ public class PlayerHealthCS : MonoBehaviour
         }
 
         // กรณีไม่มีไฟล์เซฟ (เริ่มด่านแรกครั้งแรกสุด)
-        maxHearts = Mathf.Min(defaultMaxHearts, ABSOLUTE_MAX_HEARTS);
-        currentHearts = maxHearts;
+        maxHearts = Mathf.Min(defaultMaxHearts, ABSOLUTE_MAX_HEARTS); // เริ่มต้นที่ 3 หัวใจสูงสุด
+        currentHearts = maxHearts; // เลือดปัจจุบันเริ่มต้นที่ 3
         SaveHealth(); // สร้างไฟล์เซฟเริ่มต้นทันที
     }
 
@@ -290,7 +298,12 @@ public class PlayerHealthCS : MonoBehaviour
     // ฟังก์ชันเพิ่มเลือด (Heal) เผื่อใช้กับไอเทมเก็บขวดเลือดตามแมป
     public void Heal(int amount)
     {
-        if (currentHearts >= maxHearts) return;
+        // หากพลังชีวิตเต็มอยู่แล้ว ให้ขยายช่องหัวใจสูงสุดเพิ่มแทน
+        if (currentHearts >= maxHearts)
+        {
+            IncreaseMaxHearts(amount);
+            return;
+        }
 
         currentHearts += amount;
         currentHearts = Mathf.Clamp(currentHearts, 0, maxHearts);

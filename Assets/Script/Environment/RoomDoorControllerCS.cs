@@ -14,6 +14,11 @@ public class RoomDoorControllerCS : MonoBehaviour
     [SerializeField] private string textPrefix = "Enemies: "; // ข้อความนำหน้าตัวเลข เช่น "ศัตรู: "
     [SerializeField] private bool activateOnStart = false; // เริ่มต้นมาให้ทำงานและแสดงผล UI เลยหรือไม่
 
+    [Header("Reward Settings")]
+    [SerializeField] private bool spawnRewardOnClear = false; // สปอนของรางวัลตอนจบห้องหรือไม่
+    [SerializeField] private GameObject rewardPrefab; // Prefab ของรางวัล (เช่น กล่องสมบัติ)
+    [SerializeField] private Transform rewardSpawnPoint; // จุดที่จะสปอนของรางวัล
+
     private int totalEnemies;
     private bool isDoorOpen = false;
     private bool isRoomActive = false;
@@ -135,6 +140,14 @@ public class RoomDoorControllerCS : MonoBehaviour
             {
                 doorVisual.SetActive(false);
             }
+        }
+
+        // สปอนของรางวัล (เช่น กล่องสมบัติ) หากเปิดใช้งานและระบุวัตถุไว้
+        if (spawnRewardOnClear && rewardPrefab != null)
+        {
+            Vector3 spawnPos = rewardSpawnPoint != null ? rewardSpawnPoint.position : transform.position;
+            Instantiate(rewardPrefab, spawnPos, Quaternion.identity);
+            Debug.Log("Reward spawned upon room clearance!");
         }
     }
 }
