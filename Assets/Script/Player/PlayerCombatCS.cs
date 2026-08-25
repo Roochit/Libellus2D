@@ -10,11 +10,13 @@ public class PlayerCombatCS : MonoBehaviour
     [SerializeField] private GameObject meleeHitboxPrefab;
     [SerializeField] private float meleeDuration = 0.15f;
     [SerializeField] private float meleeCooldown = 0.35f;
+    [SerializeField] private int meleeDamage = 1; // ความเสียหายการฟันระยะประชิด
     private float nextMeleeTime = 0f;
 
     [Header("Ranged Settings (ยิง)")]
     [SerializeField] private GameObject bulletPrefab;
     [SerializeField] private float rangedCooldown = 0.25f;
+    [SerializeField] private int rangedDamage = 1; // ความเสียหายการยิงไกล (กระสุน)
     private float nextRangedTime = 0f;
 
     private Vector3 lastFacingDirection = Vector3.right; // Default หันขวา
@@ -107,6 +109,18 @@ public class PlayerCombatCS : MonoBehaviour
         Quaternion spawnRotation = Quaternion.Euler(0, 0, angle);
 
         GameObject meleeInstance = Instantiate(meleeHitboxPrefab, spawnPosition, spawnRotation, transform);
+        
+        // ตั้งค่าพลังโจมตีประชิดให้กับ Hitbox
+        if (meleeInstance.TryGetComponent<PlayerMeleeAttackCS>(out var meleeAttack))
+        {
+            meleeAttack.Setup(meleeDamage);
+        }
+        else
+        {
+            var dynamicAttack = meleeInstance.AddComponent<PlayerMeleeAttackCS>();
+            dynamicAttack.Setup(meleeDamage);
+        }
+
         Destroy(meleeInstance, meleeDuration);
     }
 
@@ -119,7 +133,7 @@ public class PlayerCombatCS : MonoBehaviour
 
         if (bulletInstance.TryGetComponent<BulletCS>(out var bullet))
         {
-            bullet.Setup(lastFacingDirection);
+            bullet.Setup(lastFacingDirection, rangedDamage);
         }
     }
 }

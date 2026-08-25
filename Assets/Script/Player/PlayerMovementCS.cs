@@ -118,17 +118,21 @@ public class PlayerMovementCS : MonoBehaviour
         bool originalEnabled = myCollider != null ? myCollider.enabled : true;
         if (myCollider != null) myCollider.enabled = false;
 
-        // ยิงเรย์เพื่อดูว่าข้างหน้ามีกำแพงหรือไม่
-        RaycastHit2D hit = Physics2D.Raycast(startPosition, lastMoveDirection, dashDistance);
+        // ยิงเรย์ทั้งหมดตามเส้นทางเพื่อหาคอลไลเดอร์ทั้งหมด (หลีกเลี่ยงการถูกบังโดย Trigger เช่น ไอเทมเก็บหรือพาร์ทเปลี่ยนห้อง)
+        RaycastHit2D[] hits = Physics2D.RaycastAll(startPosition, lastMoveDirection, dashDistance);
         if (myCollider != null) myCollider.enabled = originalEnabled;
 
-        // ถ้าชนสิ่งกีดขวางแข็ง (ไม่ใช่ Trigger)
-        if (hit.collider != null && !hit.collider.isTrigger)
+        // ค้นหาคอลไลเดอร์แข็งชิ้นแรก (ไม่ใช่ Trigger) ที่ขวางหน้าอยู่
+        foreach (RaycastHit2D hit in hits)
         {
-            // ถอยจุดหมายกลับมาเท่าระยะรัศมีตัวละครประมาณ 0.45f เพื่อไม่ให้ตัวผู้เล่นสไลด์จมกำแพง
-            float hitDistance = hit.distance;
-            float safeDistance = Mathf.Max(0f, hitDistance - 0.45f);
-            targetPosition = startPosition + (lastMoveDirection * safeDistance);
+            if (hit.collider != null && !hit.collider.isTrigger)
+            {
+                // ถอยจุดหมายกลับมาเท่าระยะรัศมีตัวละครประมาณ 0.45f เพื่อไม่ให้ตัวผู้เล่นสไลด์จมกำแพง
+                float hitDistance = hit.distance;
+                float safeDistance = Mathf.Max(0f, hitDistance - 0.45f);
+                targetPosition = startPosition + (lastMoveDirection * safeDistance);
+                break; // หยุดหาเมื่อเจอกำแพงที่ใกล้ที่สุดชิ้นแรก
+            }
         }
 
         float elapsedTime = 0f;

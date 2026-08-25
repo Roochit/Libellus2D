@@ -7,8 +7,11 @@ public class BulletCS : MonoBehaviour
 
     private Vector3 moveDirection;
 
-    public void Setup(Vector3 direction)
+    public int Damage { get; private set; } = 1;
+
+    public void Setup(Vector3 direction, int damageValue)
     {
+        Damage = damageValue;
         moveDirection = direction.normalized;
         
         // หมุนตัวกระสุนให้หันตามทิศทางที่ยิง

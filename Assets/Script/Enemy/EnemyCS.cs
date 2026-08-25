@@ -296,8 +296,19 @@ public class EnemyCS : MonoBehaviour
             Vector2 direction = (transform.position - collision.transform.position).normalized;
             if (direction == Vector2.zero) direction = Vector2.right; // ป้องกันทิศทางเป็นศูนย์
             
-            TakeDamage(1, direction); // ลด 1 หัวใจ
-            Debug.Log("Enemy hit by Player Attack! Damage and Knockback applied.");
+            // หาค่าความเสียหายแบบไดนามิก
+            int damageDealt = 1;
+            if (bullet != null)
+            {
+                damageDealt = bullet.Damage;
+            }
+            else if (collision.TryGetComponent<PlayerMeleeAttackCS>(out var meleeAttack))
+            {
+                damageDealt = meleeAttack.damage;
+            }
+            
+            TakeDamage(damageDealt, direction);
+            Debug.Log($"Enemy hit by Player Attack! Damage: {damageDealt} and Knockback applied.");
         }
     }
 
@@ -320,8 +331,15 @@ public class EnemyCS : MonoBehaviour
             }
             if (direction == Vector2.zero) direction = Vector2.right;
 
-            TakeDamage(1, direction); // ลด 1 หัวใจ
-            Debug.Log("Enemy collided with Player Attack! Damage and Knockback applied.");
+            // หาค่าความเสียหายแบบไดนามิก
+            int damageDealt = 1;
+            if (collision.gameObject.TryGetComponent<PlayerMeleeAttackCS>(out var meleeAttack))
+            {
+                damageDealt = meleeAttack.damage;
+            }
+
+            TakeDamage(damageDealt, direction);
+            Debug.Log($"Enemy collided with Player Attack! Damage: {damageDealt} and Knockback applied.");
         }
     }
 }
