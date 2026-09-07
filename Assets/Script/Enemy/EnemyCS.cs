@@ -13,36 +13,36 @@ public class EnemyCS : MonoBehaviour
     [SerializeField] private float detectionRadius = 8f; // ระยะที่ศัตรูเริ่มมองเห็นผู้เล่นและวิ่งเข้าหา
 
     [Header("Combat Settings")]
-    [SerializeField] private float attackRange = 1.5f; // ระยะเข้าโจมตีด้วยดาบ (Melee) หรือ ระยะยิง (Ranged)
-    [SerializeField] private float attackCooldown = 1.5f; // คูลดาวน์การโจมตีแต่ละครั้ง
-    [SerializeField] private float damage = 10f; // ดาเมจที่จะทำกับผู้เล่น
-    [SerializeField] private GameObject meleeHitboxPrefab; // prefab ของ Hitbox โจมตีของศัตรู
-    [SerializeField] private GameObject bulletPrefab; // prefab ของกระสุน (สำหรับ Ranged)
-    [SerializeField] private float attackOffsetDistance = 1.0f; // ระยะยื่นของ Hitbox หรือจุดยิงไปด้านหน้า
+    [SerializeField] protected float attackRange = 1.5f; // ระยะเข้าโจมตีด้วยดาบ (Melee) หรือ ระยะยิง (Ranged)
+    [SerializeField] protected float attackCooldown = 1.5f; // คูลดาวน์การโจมตีแต่ละครั้ง
+    [SerializeField] protected float damage = 10f; // ดาเมจที่จะทำกับผู้เล่น
+    [SerializeField] protected GameObject meleeHitboxPrefab; // prefab ของ Hitbox โจมตีของศัตรู
+    [SerializeField] protected GameObject bulletPrefab; // prefab ของกระสุน (สำหรับ Ranged)
+    [SerializeField] protected float attackOffsetDistance = 1.0f; // ระยะยื่นของ Hitbox หรือจุดยิงไปด้านหน้า
 
     [Header("Knockback Settings")]
-    [SerializeField] private float knockbackForce = 6f; // แรงผลักตอนโดนตีกระเด็น
-    [SerializeField] private float knockbackDuration = 0.25f; // ระยะเวลากระเด็น (วิ)
-    [SerializeField] private Color damageFlashColor = Color.red; // สีตอนกระพริบได้รับดาเมจ
-    [SerializeField] private float flashDuration = 0.15f; // ระยะเวลากระพริบสีแดง
+    [SerializeField] protected float knockbackForce = 6f; // แรงผลักตอนโดนตีกระเด็น
+    [SerializeField] protected float knockbackDuration = 0.25f; // ระยะเวลากระเด็น (วิ)
+    [SerializeField] protected Color damageFlashColor = Color.red; // สีตอนกระพริบได้รับดาเมจ
+    [SerializeField] protected float flashDuration = 0.15f; // ระยะเวลากระพริบสีแดง
 
     [Header("Health Settings")]
-    [SerializeField] private int maxHearts = 2; // จำนวนหัวใจสูงสุดของศัตรู
-    private int currentHearts;
+    [SerializeField] protected int maxHearts = 2; // จำนวนหัวใจสูงสุดของศัตรู
+    protected int currentHearts;
 
-    private Transform playerTransform;
-    private Rigidbody2D rb;
-    private SpriteRenderer spriteRenderer;
-    private Animator animator;
+    protected Transform playerTransform;
+    protected Rigidbody2D rb;
+    protected SpriteRenderer spriteRenderer;
+    protected Animator animator;
 
-    private float nextAttackTime = 0f;
-    private bool isKnockedBack = false;
-    private float knockbackTimer = 0f;
-    private Vector2 knockbackDir = Vector2.zero;
-    private Color originalColor;
-    private Coroutine flashCoroutine;
+    protected float nextAttackTime = 0f;
+    protected bool isKnockedBack = false;
+    protected float knockbackTimer = 0f;
+    protected Vector2 knockbackDir = Vector2.zero;
+    protected Color originalColor;
+    protected Coroutine flashCoroutine;
 
-    private void Awake()
+    protected virtual void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
         spriteRenderer = GetComponent<SpriteRenderer>();
@@ -58,13 +58,13 @@ public class EnemyCS : MonoBehaviour
         }
     }
 
-    private void Start()
+    protected virtual void Start()
     {
         currentHearts = maxHearts;
         FindPlayer();
     }
 
-    private void Update()
+    protected virtual void Update()
     {
         if (isKnockedBack)
         {
@@ -127,7 +127,7 @@ public class EnemyCS : MonoBehaviour
         }
     }
 
-    private void FixedUpdate()
+    protected virtual void FixedUpdate()
     {
         // จัดการฟิสิกส์การเคลื่อนที่และ Knockback ผ่าน Rigidbody2D (ถ้ามี)
         if (rb == null) return;
@@ -160,7 +160,7 @@ public class EnemyCS : MonoBehaviour
         }
     }
 
-    private void FindPlayer()
+    protected virtual void FindPlayer()
     {
         // ค้นหาเป้าหมายด้วย Tag "Player"
         GameObject playerObj = GameObject.FindWithTag("Player");
@@ -170,7 +170,7 @@ public class EnemyCS : MonoBehaviour
         }
     }
 
-    private void HandleFlip(float directionX)
+    protected virtual void HandleFlip(float directionX)
     {
         if (directionX > 0.01f)
         {
@@ -184,7 +184,7 @@ public class EnemyCS : MonoBehaviour
         }
     }
 
-    private void PerformAttack()
+    protected virtual void PerformAttack()
     {
         nextAttackTime = Time.time + attackCooldown;
 
@@ -234,7 +234,7 @@ public class EnemyCS : MonoBehaviour
         }
     }
 
-    public void TakeDamage(int amount, Vector2 knockbackDirection)
+    public virtual void TakeDamage(int amount, Vector2 knockbackDirection)
     {
         if (isKnockedBack) return; // ไม่ให้โดนดาเมจซ้ำขณะกระเด็นอมตะ
 
@@ -249,13 +249,13 @@ public class EnemyCS : MonoBehaviour
         }
     }
 
-    private void Die()
+    protected virtual void Die()
     {
         Debug.Log("Enemy Died!");
         Destroy(gameObject);
     }
 
-    public void ApplyKnockback(Vector2 direction)
+    public virtual void ApplyKnockback(Vector2 direction)
     {
         isKnockedBack = true;
         knockbackTimer = knockbackDuration;
@@ -274,7 +274,7 @@ public class EnemyCS : MonoBehaviour
         flashCoroutine = StartCoroutine(FlashColorRoutine());
     }
 
-    private IEnumerator FlashColorRoutine()
+    protected virtual IEnumerator FlashColorRoutine()
     {
         if (spriteRenderer != null)
         {
@@ -284,7 +284,7 @@ public class EnemyCS : MonoBehaviour
         }
     }
 
-    private void OnTriggerEnter2D(Collider2D collision)
+    protected virtual void OnTriggerEnter2D(Collider2D collision)
     {
         // 1. ป้องกันไม่ให้ Enemy โดนโจมตีจากพวกเดียวกันเอง (เท็ก Enemy_Attack)
         if (collision.CompareTag("Enemy_Attack")) return;
@@ -312,7 +312,7 @@ public class EnemyCS : MonoBehaviour
         }
     }
 
-    private void OnCollisionEnter2D(Collision2D collision)
+    protected virtual void OnCollisionEnter2D(Collision2D collision)
     {
         // ป้องกันไม่ให้ Enemy โดนโจมตีจากพวกเดียวกันเอง (เท็ก Enemy_Attack)
         if (collision.gameObject.CompareTag("Enemy_Attack")) return;
