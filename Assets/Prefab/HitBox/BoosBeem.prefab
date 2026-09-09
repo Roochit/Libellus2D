@@ -28,7 +28,7 @@ Transform:
   m_GameObject: {fileID: 257999018044598287}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 52.5968, y: 29.5, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 138.27625, y: 23.959032, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -143,7 +143,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: be2da859f33c943f9890aa23585782b8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  beamLength: 15
+  beamLength: 120
   beamWidth: 1.2
   damage: 1
   damageTickInterval: 0.5

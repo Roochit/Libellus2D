@@ -2,20 +2,22 @@ using System.Collections;
 using UnityEngine;
 
 /// <summary>
-/// ลำแสงไม้บรรทัดยิงออกจากปากของบอสรัตติกาล (ท่าที่ 4)
-/// ชาร์จเส้นเล็งเตือน แล้วยิงลำแสงไม้บรรทัดขนาดใหญ่ออกมาเป็นแนวยาวทำดาเมจ และทำลายตัวเองเมื่อหมดเวลา
+/// ลำแสงไม้บรรทัดยิงพุ่งทะลุจอมาจากข้างจอ (ท่าที่ 4)
+/// ชาร์จเตือน แล้วยิงลำแสงไม้บรรทัดขนาดใหญ่พุ่งมาจากข้างจอทะลุผ่านทั้งหน้าจออย่างรวดเร็ว
+/// ทำดาเมจใส่ผู้เล่นที่ขวางทาง และทำลายตัวเองเมื่อหมดเวลา
 /// </summary>
 public class RattikanRulerBeamCS : MonoBehaviour
 {
     [Header("Beam Dimensions & Damage")]
-    [SerializeField] private float beamLength = 15f;
-    [SerializeField] private float beamWidth = 1.2f;
+    [SerializeField] private float beamLength = 120f; // ความยาวลำแสงให้พุ่งทะลุข้ามทั้งจอ
+    [SerializeField] private float beamWidth = 10f; // ความกว้าง/ความสูงของลำแสง
     [SerializeField] private int damage = 1;
     [SerializeField] private float damageTickInterval = 0.5f; // ความถี่ในการทำดาเมจหากผู้เล่นยืนแช่ในลำแสง
 
     [Header("Timings")]
     [SerializeField] private float chargeDuration = 0.8f; // เวลาชาร์จเตือนก่อนยิง (วิ)
     [SerializeField] private float beamDuration = 1.5f; // เวลาที่ลำแสงพุ่งค้างอยู่ (วิ)
+    [SerializeField] private float beamRushDuration = 0.1f; // เวลาที่ลำแสงพุ่งออกจากปากไปจนสุดแมป (รวดเร็ว)
 
     [Header("Visuals & References")]
     [SerializeField] private LineRenderer chargeLineRenderer; // เส้นเลเซอร์เตือนตอนชาร์จ
@@ -23,6 +25,7 @@ public class RattikanRulerBeamCS : MonoBehaviour
     [SerializeField] private BoxCollider2D beamCollider; // คอลไลเดอร์ตรวจจับดาเมจ
 
     private Vector3 fireDirection = Vector3.right;
+    private Vector3 spawnOrigin = Vector3.zero;
     private bool isFiringBeam = false;
     private float nextDamageTime = 0f;
     private bool isSetupCalled = false;
@@ -38,7 +41,40 @@ public class RattikanRulerBeamCS : MonoBehaviour
             beamVisualObject = gameObject;
         }
 
-        SetupBeamCollider();
+        if (beamCollider == null)
+        {
+            beamCollider = GetComponent<BoxCollider2D>();
+            if (beamCollider == null)
+            {
+                beamCollider = gameObject.AddComponent<BoxCollider2D>();
+            }
+        }
+        beamCollider.isTrigger = true;
+        beamCollider.enabled = false;
+
+        // สร้าง LineRenderer สำหรับเส้นเล็งเตือน (Telegraph) อัตโนมัติหากยังไม่มี
+        if (chargeLineRenderer == null)
+        {
+            chargeLineRenderer = GetComponent<LineRenderer>();
+            if (chargeLineRenderer == null)
+            {
+                chargeLineRenderer = gameObject.AddComponent<LineRenderer>();
+            }
+        }
+
+        if (chargeLineRenderer != null)
+        {
+            chargeLineRenderer.useWorldSpace = true;
+            chargeLineRenderer.startWidth = 0.2f;
+            chargeLineRenderer.endWidth = 0.2f;
+            chargeLineRenderer.material = new Material(Shader.Find("Sprites/Default"));
+            chargeLineRenderer.startColor = new Color(1f, 0.2f, 0.2f, 0.7f);
+            chargeLineRenderer.endColor = new Color(1f, 0.2f, 0.2f, 0.7f);
+            chargeLineRenderer.positionCount = 2;
+            chargeLineRenderer.sortingLayerName = "Default";
+            chargeLineRenderer.sortingOrder = 10;
+            chargeLineRenderer.enabled = false;
+        }
     }
 
     private void Start()
@@ -56,76 +92,70 @@ public class RattikanRulerBeamCS : MonoBehaviour
     {
         isSetupCalled = true;
         fireDirection = direction.normalized;
-        if (length > 0f) beamLength = length;
+
+        // รับประกันความยาวอย่างน้อย 120 หน่วยเพื่อให้พุ่งทะลุข้ามทั้งจอ
+        if (length > 0f)
+        {
+            beamLength = Mathf.Max(length, 120f);
+        }
+        else
+        {
+            beamLength = Mathf.Max(beamLength, 120f);
+        }
+
         if (duration > 0f) beamDuration = duration;
 
-        // ปรับทิศทางการหมุนของลำแสง
-        float angle = Mathf.Atan2(fireDirection.y, fireDirection.x) * Mathf.Rad2Deg;
-        transform.rotation = Quaternion.Euler(0, 0, angle);
+        // จุดกำเนิดมาจากข้างจอ
+        spawnOrigin = (transform.parent != null) ? transform.parent.position : transform.position;
 
         // ปรับแท็กให้เป็น Enemy_Attack
         gameObject.tag = "Enemy_Attack";
 
-        // ตั้งค่า Collider
-        SetupBeamCollider();
+        // ตั้งค่าสเกลเริ่มต้นให้ติดอยู่ที่ปากบอส
+        UpdateBeamTransformAndCollider(0.1f);
 
         // รีเซ็ตตัวนับทำลายตัวเองตาม duration จริง
         CancelInvoke(nameof(DestroySelf));
-        Invoke(nameof(DestroySelf), chargeDuration + beamDuration + 0.2f);
+        Invoke(nameof(DestroySelf), chargeDuration + beamDuration + 0.3f);
 
         // เริ่มลำดับการยิง
         StopAllCoroutines();
         StartCoroutine(FireSequenceRoutine());
     }
 
-    private void SetupBeamCollider()
+    /// <summary>
+    /// ปรับสเกลและตำแหน่งของลำแสง ให้เริ่มจากจุดข้างจอ (spawnOrigin) และยื่นพุ่งทะลุข้ามจอตาม currentLength เสมอ
+    /// </summary>
+    private void UpdateBeamTransformAndCollider(float currentLength)
     {
-        if (beamCollider == null)
-        {
-            beamCollider = GetComponent<BoxCollider2D>();
-            if (beamCollider == null)
-            {
-                beamCollider = gameObject.AddComponent<BoxCollider2D>();
-            }
-        }
+        float targetWidth = (transform.localScale.y > 0.5f) ? transform.localScale.y : beamWidth;
+        float angle = Mathf.Atan2(fireDirection.y, fireDirection.x) * Mathf.Rad2Deg;
 
-        beamCollider.isTrigger = true;
-        
-        // หาก Prefab มีการปรับขนาดสเกลมาแล้ว (เช่น BoosBeem สเกล 55x7) ให้ใช้สเกลเดิม
-        if (transform.localScale.x > 5f)
+        // จัดตำแหน่ง World Space ให้โคนลำแสงเริ่มจากข้างจอ (spawnOrigin)
+        // จุดกึ่งกลางของลำแสงยื่นไปข้างหน้าตามทิศทางยิงครึ่งหนึ่งของความยาว
+        transform.rotation = Quaternion.Euler(0, 0, angle);
+        transform.position = spawnOrigin + (fireDirection * (currentLength * 0.5f));
+        transform.localScale = new Vector3(currentLength, targetWidth, 1f);
+
+        if (beamCollider != null)
         {
             beamCollider.size = Vector2.one;
             beamCollider.offset = Vector2.zero;
         }
-        else
-        {
-            // จัดให้ Collider เริ่มจากจุดยิง (ปาก) ยื่นไปข้างหน้าตามความยาว beamLength
-            beamCollider.size = new Vector2(beamLength, beamWidth);
-            beamCollider.offset = new Vector2(beamLength * 0.5f, 0);
-        }
-        
-        beamCollider.enabled = false; // ปิดไว้ก่อนตอนชาร์จ
     }
 
     private IEnumerator FireSequenceRoutine()
     {
-        // 1. Charge Phase: แสดงเส้นเล็งเตือน
+        // 1. Charge Phase: แสดงเส้นเล็งเตือนพุ่งไปสุดแมป
         if (chargeLineRenderer != null)
         {
             chargeLineRenderer.enabled = true;
-            chargeLineRenderer.SetPosition(0, transform.position);
-            chargeLineRenderer.SetPosition(1, transform.position + (fireDirection * beamLength));
+            chargeLineRenderer.SetPosition(0, spawnOrigin);
+            chargeLineRenderer.SetPosition(1, spawnOrigin + (fireDirection * beamLength));
         }
 
         // ซ่อนภาพไม้บรรทัดไว้ระหว่างชาร์จ
-        if (selfSpriteRenderer != null && beamVisualObject == gameObject)
-        {
-            selfSpriteRenderer.enabled = false;
-        }
-        else if (beamVisualObject != null && beamVisualObject != gameObject)
-        {
-            beamVisualObject.SetActive(false);
-        }
+        SetAllSpriteRenderersVisible(false);
 
         yield return new WaitForSeconds(chargeDuration);
 
@@ -135,22 +165,27 @@ public class RattikanRulerBeamCS : MonoBehaviour
             chargeLineRenderer.enabled = false;
         }
 
-        // 2. Fire Phase: เปิดลำแสงไม้บรรทัด
+        // 2. Fire Phase: เปิดลำแสงไม้บรรทัด และให้พุ่งผ่านทะลุออกไปจนสุดแมปอย่างรวดเร็ว
         isFiringBeam = true;
         if (beamCollider != null)
         {
             beamCollider.enabled = true;
         }
 
-        if (selfSpriteRenderer != null && beamVisualObject == gameObject)
+        SetAllSpriteRenderersVisible(true);
+
+        // ลำแสงพุ่งทะยานจากปากบอสผ่านผู้เล่นไปจนสุดแมป (Rush across the map)
+        float elapsed = 0f;
+        while (elapsed < beamRushDuration)
         {
-            selfSpriteRenderer.enabled = true;
+            elapsed += Time.deltaTime;
+            float currentL = Mathf.Lerp(0.1f, beamLength, elapsed / beamRushDuration);
+            UpdateBeamTransformAndCollider(currentL);
+            yield return null;
         }
-        else if (beamVisualObject != null && beamVisualObject != gameObject)
-        {
-            beamVisualObject.SetActive(true);
-            beamVisualObject.transform.localScale = new Vector3(beamLength, beamWidth, 1f);
-        }
+
+        // ยืดเต็มความยาวทะลุสุดแมปตลอดช่วงระยะเวลาของลำแสง
+        UpdateBeamTransformAndCollider(beamLength);
 
         yield return new WaitForSeconds(beamDuration);
 
@@ -158,14 +193,42 @@ public class RattikanRulerBeamCS : MonoBehaviour
         DestroySelf();
     }
 
+    private void SetAllSpriteRenderersVisible(bool visible)
+    {
+        var renderers = GetComponentsInChildren<SpriteRenderer>(true);
+        if (renderers != null)
+        {
+            foreach (var sr in renderers)
+            {
+                sr.enabled = visible;
+            }
+        }
+
+        if (beamVisualObject != null && beamVisualObject != gameObject)
+        {
+            beamVisualObject.SetActive(visible);
+        }
+    }
+
     private void DestroySelf()
     {
         isFiringBeam = false;
         if (beamCollider != null) beamCollider.enabled = false;
-        if (selfSpriteRenderer != null) selfSpriteRenderer.enabled = false;
-        if (beamVisualObject != null) beamVisualObject.SetActive(false);
+        SetAllSpriteRenderersVisible(false);
 
-        Destroy(gameObject);
+        if (transform.parent != null)
+        {
+            Destroy(transform.parent.gameObject);
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
+    }
+
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        OnTriggerStay2D(collision);
     }
 
     private void OnTriggerStay2D(Collider2D collision)
@@ -177,7 +240,7 @@ public class RattikanRulerBeamCS : MonoBehaviour
             if (collision.TryGetComponent<PlayerHealthCS>(out var playerHealth))
             {
                 nextDamageTime = Time.time + damageTickInterval;
-                Vector2 pushDir = (collision.transform.position - transform.position).normalized;
+                Vector2 pushDir = (collision.transform.position - spawnOrigin).normalized;
                 if (pushDir == Vector2.zero) pushDir = fireDirection;
                 playerHealth.TakeDamage(damage, pushDir);
             }

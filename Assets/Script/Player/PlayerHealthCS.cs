@@ -162,6 +162,9 @@ public class PlayerHealthCS : MonoBehaviour
         {
             spriteRenderer.enabled = false;
         }
+
+        // แสดงหน้าต่าง Game Over และหยุดเกม (Pause Game)
+        GameOverManagerCS.Instance.ShowGameOver();
     }
 
     private void UpdateHeartUI()

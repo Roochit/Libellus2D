@@ -57,10 +57,10 @@ public class RattikanBossCS : EnemyCS
     [SerializeField] private int cutterCountPhase2 = 10; // เฟส 2 สุ่มแทง 10 จุด
     [SerializeField] private float cutterSpawnRadius = 5.0f; // รัศมีสุ่มรอบตัวผู้เล่น
 
-    [Header("=== Attack 4: ลำแสงไม้บรรทัดยิงจากปาก ===")]
+    [Header("=== Attack 4: ลำแสงไม้บรรทัดยิงทะลุจอมาจากข้างจอ ===")]
     [SerializeField] private GameObject rulerBeamPrefab; // Prefab ลำแสงไม้บรรทัด
-    [SerializeField] private Transform mouthPoint; // จุดยิงบริเวณปากของบอส
-    [SerializeField] private float beamLength = 30f; // ความยาวลำแสง (ครอบคลุมทั่วห้อง)
+    [SerializeField] private Transform mouthPoint; // จุดยิงบริเวณปากของบอส (ไม่บังคับใช้)
+    [SerializeField] private float beamLength = 120f; // ความยาวลำแสง (พุ่งทะลุข้ามจอมาจากข้างจอ)
     [SerializeField] private float beamDuration = 1.6f; // ระยะเวลาที่ลำแสงพุ่งค้างอยู่
     [SerializeField] private float horizontalYSpread = 2.5f; // ระยะสุ่มความสูงแนวนอน (กระจายขึ้น/ลง)
     [SerializeField] private int beamShotsPhase1 = 1; // จำนวนการยิงลำแสงแนวนอนใน Phase 1
@@ -89,13 +89,22 @@ public class RattikanBossCS : EnemyCS
         maxHearts = bossMaxHearts;
         currentHearts = bossMaxHearts;
 
-        // หากไม่มีจุดปาก ให้ใช้ตำแหน่งหัวบอสเป็นจุดกำเนิด
-        if (mouthPoint == null)
+        // หากไม่มีจุดปาก หรือจุดปากไม่ได้ผูกอยู่ใต้บอส ให้สร้าง MouthPoint ใต้บอสอัตโนมัติ
+        if (mouthPoint == null || !mouthPoint.IsChildOf(transform))
         {
-            GameObject mouthObj = new GameObject("MouthPoint");
-            mouthObj.transform.SetParent(transform);
-            mouthObj.transform.localPosition = new Vector3(0, 0.5f, 0);
-            mouthPoint = mouthObj.transform;
+            Transform existingMouth = transform.Find("MouthPoint");
+            if (existingMouth != null)
+            {
+                mouthPoint = existingMouth;
+                mouthPoint.localPosition = new Vector3(0.5f, 0.1f, 0f);
+            }
+            else
+            {
+                GameObject mouthObj = new GameObject("MouthPoint");
+                mouthObj.transform.SetParent(transform);
+                mouthObj.transform.localPosition = new Vector3(0.5f, 0.1f, 0f);
+                mouthPoint = mouthObj.transform;
+            }
         }
     }
 
@@ -389,13 +398,13 @@ public class RattikanBossCS : EnemyCS
     }
 
     // =========================================================================
-    // ท่าที่ 4: ยิงลำแสงไม้บรรทัดออกมาจากปาก (สุ่มเป็นเส้นตรงแนวนอน + ซูมกล้องออก)
+    // ท่าที่ 4: ลำแสงไม้บรรทัดยิงทะลุจอมาจากข้างจอ (ไม่ยิงจากปากบอส)
     // =========================================================================
     private IEnumerator Attack4_RulerBeamRoutine()
     {
-        Debug.Log("[Rattikan Boss] ใช้ท่าที่ 4: ยิงลำแสงไม้บรรทัดออกมาจากปาก (แนวนอน)!");
+        Debug.Log("[Rattikan Boss] ใช้ท่าที่ 4: เสกลำแสงไม้บรรทัดยิงทะลุจอมาจากข้างจอ!");
 
-        // 1. สั่งซูมกล้องออกเยอะๆ เพื่อให้เห็นลานประลองกว้างๆ และลำแสงขนาดยักษ์
+        // 1. สั่งซูมกล้องออกเพื่อให้เห็นมุมมองกว้างทั่วจอ
         ZoomCameraOut();
         yield return new WaitForSeconds(beamCameraZoomTime); // รอให้กล้องเริ่มซูมออก
 
@@ -405,55 +414,59 @@ public class RattikanBossCS : EnemyCS
         {
             if (currentState == BossState.Dead) break;
 
-            // 2. กำหนดทิศทางเป็นเส้นตรงแนวนอน (Horizontal Straight Line: ซ้ายหรือขวา)
-            float dirX = 1f;
-            if (playerTransform != null)
-            {
-                // เล็งไปทางฝั่งที่ผู้เล่นอยู่ตามแนวแกน X
-                dirX = (playerTransform.position.x >= transform.position.x) ? 1f : -1f;
-            }
-            else
-            {
-                dirX = (Random.value > 0.5f) ? 1f : -1f;
-            }
+            Camera cam = Camera.main;
+            float camX = cam != null ? cam.transform.position.x : transform.position.x;
+            float halfWidth = cam != null ? (cam.orthographicSize * cam.aspect) : 36f;
+            if (halfWidth < 25f) halfWidth = 36f; // รับประกันระยะครอบคลุมเมื่อกล้องซูมออก
 
+            // 2. กำหนดทิศทางของลำแสงจากข้างจอ:
+            // หากยิงหลายนัดใน Phase 2 ให้สลับฝั่ง (นัดแรกจากขวา นัดสองจากซ้าย)
+            float dirX = (shot % 2 == 0) ? -1f : 1f;
+            if (playerTransform != null && shotCount == 1)
+            {
+                dirX = (playerTransform.position.x < camX) ? -1f : 1f;
+            }
             Vector3 horizontalDir = new Vector3(dirX, 0f, 0f);
 
-            // 3. สุ่มระดับความสูงแนวนอน (Random Y Height)
+            // 3. สุ่มระดับความสูงแนวนอน (Random Y Height) รอบตำแหน่งของผู้เล่น
             float randomYOffset = Random.Range(-horizontalYSpread, horizontalYSpread);
             float targetY = (playerTransform != null ? playerTransform.position.y : transform.position.y) + randomYOffset;
 
-            // เคลื่อนตัวบอสตามแกน Y อย่างรวดเร็วเพื่อให้ปากตรงกับเส้นแนวนอนที่จะยิง
-            float moveTime = 0f;
-            Vector3 startPos = transform.position;
-            Vector3 targetBossPos = new Vector3(transform.position.x, targetY, transform.position.z);
-            while (moveTime < 0.25f)
+            // บอสไม่เลื่อนตัวมาตรงกับระดับปากที่จะยิงแล้ว (ร่ายสั่งการจากตำแหน่งเดิม)
+            if (playerTransform != null)
             {
-                moveTime += Time.deltaTime;
-                transform.position = Vector3.Lerp(startPos, targetBossPos, moveTime / 0.25f);
-                yield return null;
+                HandleFlip((playerTransform.position.x < transform.position.x) ? -1f : 1f);
             }
-            transform.position = targetBossPos;
-
-            // หันหน้าตามทิศทางแนวนอนที่จะยิง
-            HandleFlip(dirX);
 
             if (animator != null) animator.SetTrigger("Attack");
 
-            // 4. เสกลำแสงไม้บรรทัดแนวนอน
-            Vector3 spawnPos = mouthPoint != null ? mouthPoint.position : transform.position;
+            // 4. เสกลำแสงไม้บรรทัดแนวนอนพุ่งทะลุจอมาจากข้างจอ (ไม่ยิงจากปากบอส)
+            // หากยิงไปทางซ้าย (dirX = -1) ลำแสงเริ่มจากขอบขวาของจอพุ่งทะลุข้ามจอไปซ้าย
+            // หากยิงไปทางขวา (dirX = 1) ลำแสงเริ่มจากขอบซ้ายของจอพุ่งทะลุข้ามจอไปขวา
+            float sideScreenX = (dirX < 0f) ? (camX + halfWidth + 5f) : (camX - halfWidth - 5f);
+            Vector3 spawnPos = new Vector3(sideScreenX, targetY, 0f);
 
             if (rulerBeamPrefab != null)
             {
+                // เสกลำแสงที่ข้างจอในระดับความสูง targetY
                 GameObject beamObj = Instantiate(rulerBeamPrefab, spawnPos, Quaternion.identity);
                 beamObj.tag = "Enemy_Attack";
                 Destroy(beamObj, beamDuration + 1.5f); // รับประกันการทำลายตัวเองแน่นอน
 
-                if (!beamObj.TryGetComponent<RattikanRulerBeamCS>(out var beamScript))
+                // ตั้งค่า RattikanRulerBeamCS ทั้งที่ root หรือ child ให้ทำงานและชี้ทิศทางเดียวกันทั้งหมด
+                var allBeams = beamObj.GetComponentsInChildren<RattikanRulerBeamCS>(true);
+                if (allBeams != null && allBeams.Length > 0)
                 {
-                    beamScript = beamObj.AddComponent<RattikanRulerBeamCS>();
+                    foreach (var beam in allBeams)
+                    {
+                        beam.Setup(horizontalDir, beamLength, beamDuration);
+                    }
                 }
-                beamScript.Setup(horizontalDir, beamLength, beamDuration);
+                else
+                {
+                    var beamScript = beamObj.AddComponent<RattikanRulerBeamCS>();
+                    beamScript.Setup(horizontalDir, beamLength, beamDuration);
+                }
             }
 
             // ค้างท่าระหว่างยิงลำแสง
