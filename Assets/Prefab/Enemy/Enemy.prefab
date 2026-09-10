@@ -95,7 +95,7 @@ Rigidbody2D:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3480196441487220139}
-  m_BodyType: 0
+  m_BodyType: 1
   m_Simulated: 1
   m_UseFullKinematicContacts: 0
   m_UseAutoMass: 0
@@ -161,12 +161,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 24c77dded61ac4c14aabd1addcbeefbf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  enemyType: 0
   moveSpeed: 3
   detectionRadius: 8
   attackRange: 1.5
   attackCooldown: 1.5
   damage: 1
   meleeHitboxPrefab: {fileID: 3755717365762094065, guid: a2954cd097c114e2db7337d9111407d7, type: 3}
+  bulletPrefab: {fileID: 0}
   attackOffsetDistance: 1
   knockbackForce: 6
   knockbackDuration: 0.25
