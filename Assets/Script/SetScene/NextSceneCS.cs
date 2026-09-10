@@ -21,6 +21,8 @@ public class NextSceneCS : MonoBehaviour
 
     void OnTriggerEnter2D(Collider2D other){
         if(other.CompareTag("Player")){
+            // บันทึกชื่อฉากใหม่ลงใน DB ความคืบหน้าของเกม
+            GameProgressManagerCS.SaveCurrentScene(nextSceneName);
             SceneManager.LoadScene(nextSceneName);
         }
     }

@@ -44,19 +44,21 @@ public class LobbyGameStarterCS : MonoBehaviour
     {
         Time.timeScale = 1f;
         DeleteSaveData();
+        GameProgressManagerCS.DeleteProgressData();
         SceneManager.LoadScene(targetSceneName);
     }
 
     /// <summary>
-    /// 2. ปุ่มโหลดเซฟเกม (Load / Continue Game): โหลดเข้าฉากโดยใช้ข้อมูลเลือดจากเซฟเดิม
+    /// 2. ปุ่มโหลดเซฟเกม (Load / Continue Game): โหลดเข้าฉากโดยใช้ข้อมูลเลือดและด่านล่าสุดจากเซฟเดิม
     /// </summary>
     public void LoadSaveGame()
     {
         Time.timeScale = 1f;
         if (HasSaveData())
         {
-            Debug.Log("[LobbyGameStarter] พบไฟล์เซฟเดิม -> กำลังโหลดเข้าเกม...");
-            SceneManager.LoadScene(targetSceneName);
+            string sceneToLoad = GameProgressManagerCS.GetSavedSceneName(fallback: targetSceneName);
+            Debug.Log($"[LobbyGameStarter] พบไฟล์เซฟเดิม -> กำลังโหลดเข้าด่าน {sceneToLoad}...");
+            SceneManager.LoadScene(sceneToLoad);
         }
         else
         {
@@ -80,7 +82,7 @@ public class LobbyGameStarterCS : MonoBehaviour
     {
         try
         {
-            return File.Exists(saveFilePath);
+            return File.Exists(saveFilePath) || GameProgressManagerCS.HasProgressData();
         }
         catch
         {

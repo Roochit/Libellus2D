@@ -91,6 +91,7 @@ public class LobbyManagerCS : MonoBehaviour
             Debug.LogWarning("[LobbyManager] ลบไฟล์เซฟไม่สำเร็จ: " + e.Message);
         }
 
+        GameProgressManagerCS.DeleteProgressData();
         SceneManager.LoadScene(targetSceneName);
     }
 
@@ -105,8 +106,9 @@ public class LobbyManagerCS : MonoBehaviour
         Time.timeScale = 1f;
         if (HasSaveData())
         {
-            Debug.Log("[LobbyManager] โหลดเซฟเดิมเข้าเกม...");
-            SceneManager.LoadScene(targetSceneName);
+            string sceneToLoad = GameProgressManagerCS.GetSavedSceneName(fallback: targetSceneName);
+            Debug.Log($"[LobbyManager] โหลดเซฟเดิมเข้าเกม -> ด่าน {sceneToLoad}...");
+            SceneManager.LoadScene(sceneToLoad);
         }
         else
         {
@@ -121,7 +123,7 @@ public class LobbyManagerCS : MonoBehaviour
     {
         try
         {
-            return File.Exists(saveFilePath);
+            return File.Exists(saveFilePath) || GameProgressManagerCS.HasProgressData();
         }
         catch
         {
