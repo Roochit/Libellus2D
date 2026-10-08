@@ -56,5 +56,8 @@
         "temp/": true,
         "Temp/": true
     },
-    "dotnet.defaultSolution": "Libellus2D.sln"
+    "dotnet.defaultSolution": "Libellus2D.sln",
+    "dotnet.dotnetPath": "/usr/local/share/dotnet/dotnet",
+    "omnisharp.dotnetPath": "/usr/local/share/dotnet/dotnet",
+    "csharp.dotnetPath": "/usr/local/share/dotnet/dotnet"
 }
