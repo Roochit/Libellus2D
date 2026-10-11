@@ -154,8 +154,6 @@ Libellus2D/
 
 - **.NET SDK Configuration:**  
   โปรเจกต์นี้ได้รับการกำหนดค่าสภาพแวดล้อม C# ใน [.vscode/settings.json](file:///Users/mac_air_m4/Documents/Unity_Project/Libellus2D/.vscode/settings.json) ไว้อย่างถูกต้องเพื่อรองรับการตรวจจับ .NET SDK บน macOS
-- **การประเมินการใช้งาน Docker:**  
-  เนื่องจากโปรเจกต์นี้เป็น **Client-side Game** ที่ต้องใช้ GPU Metal Acceleration และ Unity Editor GUI ในการพัฒนาโดยตรง จึง**ไม่แนะนำให้ใช้ Docker** บนเครื่อง Local (อ่านรายงานฉบับเต็มได้ที่ [AI_log/ENVIRONMENT_AND_DOCKER_REPORT.md](file:///Users/mac_air_m4/Documents/Unity_Project/Libellus2D/AI_log/ENVIRONMENT_AND_DOCKER_REPORT.md))
 
 ---
 
