@@ -1,15 +1,16 @@
+using System.Collections;
 using UnityEngine;
 
 /// <summary>
-/// ระบบควบคุมการเล่น Animation และการหันหน้า (FlipX) ของตัวละคร Player
-/// รองรับทั้งระบบ Animator Parameters (มาตรฐาน Unity) และระบบ Direct Play (animator.Play)
+/// ระบบควบคุมการเล่น Animation, การกลับด้านตัวละคร (FlipX)
+/// และรองรับท่าเดิน, ท่ายืนนิ่ง, ท่าหลบ/พุ่ง (Dash), และท่าฟันโจมตี 3 ทิศทาง (Melee Attack)
 /// </summary>
 [RequireComponent(typeof(SpriteRenderer))]
 public class PlayerAnimationCS : MonoBehaviour
 {
     public enum ControlMode
     {
-        AnimatorParameters, // ใช้ Parameters & Transitions ใน Animator (state, isMoving, moveX, moveY)
+        AnimatorParameters, // ใช้ Parameters & Transitions ใน Animator (state, isMoving, moveX, moveY, triggers)
         DirectPlay          // สั่งเล่น State โดยตรงตามชื่อคลิป (animator.Play) ไม่ต้องเซ็ต Transitions ให้ยุ่งยาก
     }
 
@@ -17,19 +18,23 @@ public class PlayerAnimationCS : MonoBehaviour
     [Tooltip("เลือกวิธีที่ต้องการควบคุม Animator")]
     [SerializeField] private ControlMode controlMode = ControlMode.AnimatorParameters;
 
-    [Header("ชื่อ State / คลิปอนิเมชันใน Animator")]
+    [Header("ชื่อ State ท่ายืนและท่าเดิน")]
     [SerializeField] private string idleStateName = "Player_idel";
     [SerializeField] private string walkDownStateName = "Player_Walk_down";
     [SerializeField] private string walkUpStateName = "Player_Walk_Up";
     [SerializeField] private string walkSideStateName = "Player_side";
 
-    [Header("การหันหน้าตัวละคร (Sprite Flipping)")]
-    [Tooltip("กลับด้าน SpriteRenderer แนวนอนเมื่อเดินไปทางซ้าย")]
-    [SerializeField] private bool flipOnMoveLeft = true;
+    [Header("ชื่อ State ท่าหลบ (Dash)")]
+    [SerializeField] private string dashStateName = "Player_Dash";
 
-    [Header("การโจมตี (ทางเลือกเสริม)")]
-    [Tooltip("ชื่อ Trigger สำหรับการโจมตีใน Animator (ถ้ามี)")]
-    [SerializeField] private string attackTriggerName = "Attack";
+    [Header("ชื่อ State ท่าฟันโจมตี (Melee Attack)")]
+    [SerializeField] private string attackUpStateName = "PlayerAttack_Melee_Up";
+    [SerializeField] private string attackDownStateName = "PlayerAttack_Melee_Down";
+    [SerializeField] private string attackSideStateName = "PlayerAttack_Melee_Side";
+
+    [Header("การหันหน้าตัวละคร (Sprite Flipping)")]
+    [Tooltip("กลับด้าน SpriteRenderer แนวนอนเมื่อเดินหรือฟันไปทางซ้าย")]
+    [SerializeField] private bool flipOnMoveLeft = true;
 
     // References
     private Animator animator;
@@ -43,25 +48,36 @@ public class PlayerAnimationCS : MonoBehaviour
     private int isMovingHash;
     private int moveXHash;
     private int moveYHash;
+    private int isDashingHash;
+    private int dashTriggerHash;
     private int attackTriggerHash;
+    private int attackUpHash;
+    private int attackDownHash;
+    private int attackSideHash;
 
     // ตรวจสอบ Parameter ที่มีอยู่ใน Animator จริง
     private bool hasParamState = false;
     private bool hasParamIsMoving = false;
     private bool hasParamMoveX = false;
     private bool hasParamMoveY = false;
-    private bool hasParamAttack = false;
+    private bool hasParamIsDashing = false;
+    private bool hasParamDashTrigger = false;
+    private bool hasParamAttackTrigger = false;
+    private bool hasParamAttackUp = false;
+    private bool hasParamAttackDown = false;
+    private bool hasParamAttackSide = false;
 
     // Tracking ปัจจุบัน
     private string currentPlayingState = "";
-    private int currentStateInt = 0; // 0=Idle, 1=WalkDown, 2=WalkUp, 3=WalkSide
+    private int currentStateInt = 0; // 0=Idle, 1=WalkDown, 2=WalkUp, 3=WalkSide, 4=Dash, 5=AttackDown, 6=AttackUp, 7=AttackSide
+    private bool isAttacking = false;
+    private Coroutine attackRoutine;
 
     private void Awake()
     {
         animator = GetComponent<Animator>();
         if (animator == null)
         {
-            // ลองค้นหาในลูกของ GameObject เผื่อแยก Model ไว้ข้างใน
             animator = GetComponentInChildren<Animator>();
         }
 
@@ -80,13 +96,23 @@ public class PlayerAnimationCS : MonoBehaviour
         isMovingHash = Animator.StringToHash("isMoving");
         moveXHash = Animator.StringToHash("moveX");
         moveYHash = Animator.StringToHash("moveY");
-        attackTriggerHash = Animator.StringToHash(attackTriggerName);
+        isDashingHash = Animator.StringToHash("isDashing");
+        dashTriggerHash = Animator.StringToHash("Dash");
+        attackTriggerHash = Animator.StringToHash("Attack");
+        attackUpHash = Animator.StringToHash("AttackUp");
+        attackDownHash = Animator.StringToHash("AttackDown");
+        attackSideHash = Animator.StringToHash("AttackSide");
 
         CheckAnimatorParameters();
     }
 
     private void OnEnable()
     {
+        if (playerMovement != null)
+        {
+            playerMovement.OnDashTriggered += HandleDash;
+        }
+
         if (playerCombat != null)
         {
             playerCombat.OnMeleeAttackTriggered += HandleMeleeAttack;
@@ -96,6 +122,11 @@ public class PlayerAnimationCS : MonoBehaviour
 
     private void OnDisable()
     {
+        if (playerMovement != null)
+        {
+            playerMovement.OnDashTriggered -= HandleDash;
+        }
+
         if (playerCombat != null)
         {
             playerCombat.OnMeleeAttackTriggered -= HandleMeleeAttack;
@@ -113,7 +144,12 @@ public class PlayerAnimationCS : MonoBehaviour
             if (param.name == "isMoving") hasParamIsMoving = true;
             if (param.name == "moveX") hasParamMoveX = true;
             if (param.name == "moveY") hasParamMoveY = true;
-            if (param.name == attackTriggerName) hasParamAttack = true;
+            if (param.name == "isDashing") hasParamIsDashing = true;
+            if (param.name == "Dash") hasParamDashTrigger = true;
+            if (param.name == "Attack") hasParamAttackTrigger = true;
+            if (param.name == "AttackUp") hasParamAttackUp = true;
+            if (param.name == "AttackDown") hasParamAttackDown = true;
+            if (param.name == "AttackSide") hasParamAttackSide = true;
         }
     }
 
@@ -121,12 +157,25 @@ public class PlayerAnimationCS : MonoBehaviour
     {
         if (animator == null) return;
 
+        // หากกำลังติดแอ็กชันโจมตี จะล็อกแอนิเมชันไว้จนกว่าจะฟันเสร็จ
+        if (isAttacking)
+        {
+            return;
+        }
+
+        // ตรวจสอบสถานะการพุ่ง (Dash)
+        if (playerMovement != null && playerMovement.IsDashing)
+        {
+            UpdateDashAnimation();
+            return;
+        }
+
         Vector3 moveInput = GetMoveInput();
-        UpdateAnimationAndDirection(moveInput);
+        UpdateLocomotionAnimation(moveInput);
     }
 
     /// <summary>
-    /// อ่านค่าเวกเตอร์การเคลื่อนที่ของผู้เล่น (อ่านจาก PlayerMovementCS หรือ Input โดยตรง)
+    /// อ่านค่าการเดิน
     /// </summary>
     private Vector3 GetMoveInput()
     {
@@ -135,7 +184,6 @@ public class PlayerAnimationCS : MonoBehaviour
             return playerMovement.MoveInput;
         }
 
-        // Fallback หากไม่มี PlayerMovementCS
         Vector3 input = Vector3.zero;
         if (Input.GetKey(KeyCode.W)) input.y += 1f;
         if (Input.GetKey(KeyCode.S)) input.y -= 1f;
@@ -145,9 +193,9 @@ public class PlayerAnimationCS : MonoBehaviour
     }
 
     /// <summary>
-    /// ประมวลผลทิศทาง การกลับด้านตัวละคร และเลือกคลิป Animation ที่เหมาะสม
+    /// ควบคุมแอนิเมชันการยืนนิ่งและการเดิน
     /// </summary>
-    private void UpdateAnimationAndDirection(Vector3 moveInput)
+    private void UpdateLocomotionAnimation(Vector3 moveInput)
     {
         bool isMoving = moveInput.sqrMagnitude > 0.01f;
 
@@ -156,35 +204,20 @@ public class PlayerAnimationCS : MonoBehaviour
 
         if (!isMoving)
         {
-            // หยุดนิ่ง (Idle)
             targetStateName = idleStateName;
             targetStateInt = 0;
         }
         else
         {
-            // กำลังเคลื่อนที่: ตรวจดูว่าเคลื่อนที่แนวนอนหรือแนวตั้งเด่นกว่า
             if (Mathf.Abs(moveInput.x) > Mathf.Abs(moveInput.y))
             {
-                // เคลื่อนที่แนวนอน (ซ้าย / ขวา)
                 targetStateName = walkSideStateName;
                 targetStateInt = 3;
 
-                // หันหน้าซ้าย-ขวา
-                if (flipOnMoveLeft && spriteRenderer != null)
-                {
-                    if (moveInput.x < -0.01f)
-                    {
-                        spriteRenderer.flipX = true; // หันซ้าย
-                    }
-                    else if (moveInput.x > 0.01f)
-                    {
-                        spriteRenderer.flipX = false; // หันขวา
-                    }
-                }
+                ApplyHorizontalFlip(moveInput.x);
             }
             else
             {
-                // เคลื่อนที่แนวตั้ง (บน / ล่าง)
                 if (moveInput.y > 0.01f)
                 {
                     targetStateName = walkUpStateName;
@@ -198,54 +231,73 @@ public class PlayerAnimationCS : MonoBehaviour
             }
         }
 
-        // ส่งข้อมูลไปยัง Animator ตามโหมดที่เลือก
-        if (controlMode == ControlMode.DirectPlay)
-        {
-            PlayDirect(targetStateName);
-        }
-        else
-        {
-            UpdateParameters(targetStateInt, isMoving, moveInput);
-        }
+        ApplyAnimation(targetStateName, targetStateInt, isMoving, moveInput, false);
     }
 
     /// <summary>
-    /// สั่งเล่น State โดยตรงผ่าน animator.Play() เมื่อ State เปลี่ยนไป
+    /// ควบคุมแอนิเมชันท่าพุ่ง (Dash)
     /// </summary>
-    private void PlayDirect(string stateName)
+    private void UpdateDashAnimation()
     {
-        if (currentPlayingState == stateName) return;
+        Vector3 dashDir = playerMovement != null ? playerMovement.LastMoveDirection : Vector3.down;
+        ApplyHorizontalFlip(dashDir.x);
 
-        currentPlayingState = stateName;
-        animator.Play(stateName);
+        ApplyAnimation(dashStateName, 4, true, dashDir, true);
     }
 
     /// <summary>
-    /// อัปเดตค่า Animator Parameters
+    /// ควบคุมการหันซ้าย-ขวา
     /// </summary>
-    private void UpdateParameters(int stateInt, bool isMoving, Vector3 moveInput)
+    private void ApplyHorizontalFlip(float xDir)
+    {
+        if (!flipOnMoveLeft || spriteRenderer == null) return;
+
+        if (xDir < -0.01f)
+        {
+            spriteRenderer.flipX = true; // หันซ้าย
+        }
+        else if (xDir > 0.01f)
+        {
+            spriteRenderer.flipX = false; // หันขวา
+        }
+    }
+
+    /// <summary>
+    /// ส่งคำสั่งไปยัง Animator ตามโหมดที่เลือก
+    /// </summary>
+    private void ApplyAnimation(string stateName, int stateInt, bool isMoving, Vector3 dir, bool isDashing)
     {
         currentStateInt = stateInt;
 
-        if (hasParamState)
+        if (controlMode == ControlMode.DirectPlay)
         {
-            animator.SetInteger(stateHash, stateInt);
+            if (currentPlayingState != stateName)
+            {
+                currentPlayingState = stateName;
+                animator.Play(stateName);
+            }
+        }
+        else
+        {
+            if (hasParamState) animator.SetInteger(stateHash, stateInt);
+            if (hasParamIsMoving) animator.SetBool(isMovingHash, isMoving);
+            if (hasParamMoveX) animator.SetFloat(moveXHash, dir.x);
+            if (hasParamMoveY) animator.SetFloat(moveYHash, dir.y);
+            if (hasParamIsDashing) animator.SetBool(isDashingHash, isDashing);
+        }
+    }
+
+    /// <summary>
+    /// ทำงานเมื่อเริ่มพุ่ง (Dash Trigger)
+    /// </summary>
+    private void HandleDash()
+    {
+        if (hasParamDashTrigger)
+        {
+            animator.SetTrigger(dashTriggerHash);
         }
 
-        if (hasParamIsMoving)
-        {
-            animator.SetBool(isMovingHash, isMoving);
-        }
-
-        if (hasParamMoveX)
-        {
-            animator.SetFloat(moveXHash, moveInput.x);
-        }
-
-        if (hasParamMoveY)
-        {
-            animator.SetFloat(moveYHash, moveInput.y);
-        }
+        UpdateDashAnimation();
     }
 
     /// <summary>
@@ -253,18 +305,78 @@ public class PlayerAnimationCS : MonoBehaviour
     /// </summary>
     private void HandleMeleeAttack()
     {
-        if (hasParamAttack)
+        Vector3 facingDir = playerCombat != null ? playerCombat.LastFacingDirection : Vector3.down;
+        float attackDuration = playerCombat != null ? Mathf.Max(0.15f, playerCombat.MeleeDuration) : 0.2f;
+
+        string attackStateName;
+        int attackStateInt;
+
+        // คำนวณทิศทางของการฟัน
+        if (Mathf.Abs(facingDir.x) > Mathf.Abs(facingDir.y))
+        {
+            attackStateName = attackSideStateName;
+            attackStateInt = 7;
+            ApplyHorizontalFlip(facingDir.x);
+
+            if (hasParamAttackSide) animator.SetTrigger(attackSideHash);
+        }
+        else
+        {
+            if (facingDir.y > 0.01f)
+            {
+                attackStateName = attackUpStateName;
+                attackStateInt = 6;
+                if (hasParamAttackUp) animator.SetTrigger(attackUpHash);
+            }
+            else
+            {
+                attackStateName = attackDownStateName;
+                attackStateInt = 5;
+                if (hasParamAttackDown) animator.SetTrigger(attackDownHash);
+            }
+        }
+
+        if (hasParamAttackTrigger)
         {
             animator.SetTrigger(attackTriggerHash);
         }
+
+        // เริ่มเล่นท่าโจมตีและล็อกไว้ตามระยะเวลาโจมตี
+        if (attackRoutine != null) StopCoroutine(attackRoutine);
+        attackRoutine = StartCoroutine(PerformAttackAnimationRoutine(attackStateName, attackStateInt, attackDuration));
+    }
+
+    private IEnumerator PerformAttackAnimationRoutine(string attackStateName, int attackStateInt, float duration)
+    {
+        isAttacking = true;
+        currentPlayingState = attackStateName;
+        currentStateInt = attackStateInt;
+
+        if (controlMode == ControlMode.DirectPlay)
+        {
+            animator.Play(attackStateName, 0, 0f);
+        }
+        else if (hasParamState)
+        {
+            animator.SetInteger(stateHash, attackStateInt);
+        }
+
+        yield return new WaitForSeconds(duration);
+
+        isAttacking = false;
+        attackRoutine = null;
+
+        // เมื่อฟันเสร็จ ให้กลับไปสถานะการเดิน/ยืนตามปกติทันที
+        Vector3 currentInput = GetMoveInput();
+        UpdateLocomotionAnimation(currentInput);
     }
 
     /// <summary>
-    /// ทำงานเมื่อผู้เล่นทำการยิง (Ranged Attack)
+    /// ทำงานเมื่อผู้เล่นยิงกระสุน (Ranged Attack)
     /// </summary>
     private void HandleRangedAttack()
     {
-        if (hasParamAttack)
+        if (hasParamAttackTrigger)
         {
             animator.SetTrigger(attackTriggerHash);
         }

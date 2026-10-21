@@ -869,37 +869,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 111028445}
   m_CullTransparentMesh: 1
---- !u!1 &113831796
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 113831797}
-  m_Layer: 0
-  m_Name: Enemy in Box 04
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &113831797
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 113831796}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 156854678}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &128018982
 GameObject:
   m_ObjectHideFlags: 0
@@ -979,9 +948,6 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1529919157}
-  - {fileID: 428692087}
-  - {fileID: 1762205222}
-  - {fileID: 113831797}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &184278849
@@ -1795,37 +1761,6 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
---- !u!1 &428692086
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 428692087}
-  m_Layer: 0
-  m_Name: Enemy in Box 02
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &428692087
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 428692086}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 11.249235, y: 19.36912, z: -0.6371842}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 156854678}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &435190388
 GameObject:
   m_ObjectHideFlags: 0
@@ -6253,6 +6188,22 @@ PrefabInstance:
       propertyPath: m_Name
       value: Player
       objectReference: {fileID: 0}
+    - target: {fileID: 3678827243551645524, guid: 14c4fd258e5714882961f6ecb9503451, type: 3}
+      propertyPath: attackPoint
+      value: 
+      objectReference: {fileID: 1535692992}
+    - target: {fileID: 3678827243551645524, guid: 14c4fd258e5714882961f6ecb9503451, type: 3}
+      propertyPath: attackOffsetDistance
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3678827243551645524, guid: 14c4fd258e5714882961f6ecb9503451, type: 3}
+      propertyPath: meleeHitboxScaleMultiplier.x
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 3678827243551645524, guid: 14c4fd258e5714882961f6ecb9503451, type: 3}
+      propertyPath: meleeHitboxScaleMultiplier.y
+      value: 0.6
+      objectReference: {fileID: 0}
     - target: {fileID: 4162663679854088178, guid: 14c4fd258e5714882961f6ecb9503451, type: 3}
       propertyPath: m_LocalPosition.x
       value: -7.1
@@ -6291,6 +6242,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4162663679854088178, guid: 14c4fd258e5714882961f6ecb9503451, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8533481486578934720, guid: 14c4fd258e5714882961f6ecb9503451, type: 3}
+      propertyPath: controlMode
       value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
@@ -6958,37 +6913,6 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
---- !u!1 &1762205221
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1762205222}
-  m_Layer: 0
-  m_Name: Enemy in Box 03
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1762205222
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1762205221}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 11.249235, y: 19.36912, z: -0.6371842}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 156854678}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1771357804
 GameObject:
   m_ObjectHideFlags: 0

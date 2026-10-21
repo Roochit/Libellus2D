@@ -102,10 +102,14 @@ public class PlayerMovementCS : MonoBehaviour
         }
     }
 
+    public System.Action OnDashTriggered;
+    public float DashDuration => dashDuration;
+
     private IEnumerator PerformDashRoutine()
     {
         canDash = false;
         isDashing = true;
+        OnDashTriggered?.Invoke();
 
         // รีเซ็ตความเร็วของ Rigidbody ก่อนเริ่มพุ่ง
         if (rb != null) rb.velocity = Vector2.zero;

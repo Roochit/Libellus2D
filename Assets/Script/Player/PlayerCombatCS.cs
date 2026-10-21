@@ -2,12 +2,25 @@ using UnityEngine;
 
 public class PlayerCombatCS : MonoBehaviour
 {
+    public enum AimMode
+    {
+        MousePosition,      // เล็งตามตำแหน่งเมาส์ (ฟัน/ยิงไปที่เคอร์เซอร์เมาส์)
+        NearestEnemy,       // ล็อกเป้าหาศัตรูที่ใกล้ที่สุดอัตโนมัติ
+        MovementDirection   // หันตามปุ่ม WASD
+    }
+
+    [Header("Aiming Settings (การเล็ง)")]
+    [Tooltip("เลือกรูปแบบการเล็งทิศทางการโจมตี")]
+    [SerializeField] private AimMode aimMode = AimMode.MousePosition;
+
     [Header("Attack Offsets & Points")]
     [SerializeField] private Transform attackPoint;
     [SerializeField] private float attackOffsetDistance = 1.2f;
 
     [Header("Melee Settings (ฟัน)")]
     [SerializeField] private GameObject meleeHitboxPrefab;
+    [Tooltip("ตัวคูณขนาด Hitbox ของการฟัน (ค่า 1 คือขนาดปกติใน Prefab, 1.5 คือใหญ่ขึ้น 50%)")]
+    [SerializeField] private Vector2 meleeHitboxScaleMultiplier = Vector2.one;
     [SerializeField] private float meleeDuration = 0.15f;
     [SerializeField] private float meleeCooldown = 0.35f;
     [SerializeField] private int meleeDamage = 1; // ความเสียหายการฟันระยะประชิด
@@ -24,6 +37,7 @@ public class PlayerCombatCS : MonoBehaviour
     public System.Action OnMeleeAttackTriggered;
     public System.Action OnRangedAttackTriggered;
     public Vector3 LastFacingDirection => lastFacingDirection;
+    public float MeleeDuration => meleeDuration;
 
     private void Awake()
     {
@@ -38,7 +52,7 @@ public class PlayerCombatCS : MonoBehaviour
 
     private void UpdateFacingDirection()
     {
-        // อัปเดตทิศทางจากปุ่ม WASD ที่กดอยู่เพื่อใช้ระบุทิศทางการฟัน/ยิง
+        // หากตั้งเป็น MovementDirection หรือกดปุ่ม WASD ให้อัปเดตทิศทาง
         Vector3 inputDir = Vector3.zero;
         if (Input.GetKey(KeyCode.W)) inputDir.y += 1f;
         if (Input.GetKey(KeyCode.S)) inputDir.y -= 1f;
@@ -56,7 +70,7 @@ public class PlayerCombatCS : MonoBehaviour
         // คลิกซ้าย หรือ ปุ่ม J -> ฟัน
         if ((Input.GetMouseButtonDown(0) || Input.GetKeyDown(KeyCode.J)) && Time.time >= nextMeleeTime)
         {
-            FaceNearestEnemy(); // หันหน้าไปหาศัตรูที่ใกล้ที่สุดก่อนฟัน
+            UpdateAimDirection();
             PerformMeleeAttack();
             nextMeleeTime = Time.time + meleeCooldown;
         }
@@ -64,9 +78,44 @@ public class PlayerCombatCS : MonoBehaviour
         // คลิกขวา หรือ ปุ่ม K -> ยิง
         if ((Input.GetMouseButtonDown(1) || Input.GetKeyDown(KeyCode.K)) && Time.time >= nextRangedTime)
         {
-            FaceNearestEnemy(); // หันหน้าไปหาศัตรูที่ใกล้ที่สุดก่อนยิง
+            UpdateAimDirection();
             PerformRangedAttack();
             nextRangedTime = Time.time + rangedCooldown;
+        }
+    }
+
+    private void UpdateAimDirection()
+    {
+        switch (aimMode)
+        {
+            case AimMode.MousePosition:
+                AimTowardsMouse();
+                break;
+            case AimMode.NearestEnemy:
+                FaceNearestEnemy();
+                break;
+            case AimMode.MovementDirection:
+                // ใช้ทิศทางจาก WASD ตามปกติ
+                break;
+        }
+    }
+
+    private void AimTowardsMouse()
+    {
+        Camera cam = Camera.main;
+        if (cam == null) return;
+
+        Vector3 mouseScreenPos = Input.mousePosition;
+        Vector3 mouseWorldPos = cam.ScreenToWorldPoint(mouseScreenPos);
+        mouseWorldPos.z = 0f;
+
+        Vector3 playerPos = transform.position;
+        playerPos.z = 0f;
+
+        Vector3 direction = (mouseWorldPos - playerPos).normalized;
+        if (direction.sqrMagnitude > 0.001f)
+        {
+            lastFacingDirection = direction;
         }
     }
 
@@ -114,6 +163,14 @@ public class PlayerCombatCS : MonoBehaviour
 
         GameObject meleeInstance = Instantiate(meleeHitboxPrefab, spawnPosition, spawnRotation, transform);
         
+        // ปรับขนาด Hitbox ตามตัวคูณที่ตั้งไว้
+        Vector3 currentScale = meleeInstance.transform.localScale;
+        meleeInstance.transform.localScale = new Vector3(
+            currentScale.x * meleeHitboxScaleMultiplier.x,
+            currentScale.y * meleeHitboxScaleMultiplier.y,
+            currentScale.z
+        );
+
         // ตั้งค่าพลังโจมตีประชิดให้กับ Hitbox
         if (meleeInstance.TryGetComponent<PlayerMeleeAttackCS>(out var meleeAttack))
         {
@@ -142,5 +199,16 @@ public class PlayerCombatCS : MonoBehaviour
         }
 
         OnRangedAttackTriggered?.Invoke();
+    }
+
+    private void OnDrawGizmosSelected()
+    {
+        Transform point = attackPoint != null ? attackPoint : transform;
+        Vector3 dir = lastFacingDirection.sqrMagnitude > 0.01f ? lastFacingDirection : Vector3.right;
+        Vector3 spawnPos = point.position + (dir * attackOffsetDistance);
+
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(spawnPos, 0.4f * Mathf.Max(meleeHitboxScaleMultiplier.x, meleeHitboxScaleMultiplier.y));
+        Gizmos.DrawLine(point.position, spawnPos);
     }
 }
