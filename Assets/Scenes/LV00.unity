@@ -4548,7 +4548,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &980222946
 RectTransform:
   m_ObjectHideFlags: 0
@@ -6210,18 +6210,6 @@ PrefabInstance:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: 1929483961402295335, guid: 14c4fd258e5714882961f6ecb9503451, type: 3}
-      propertyPath: maxHearts
-      value: 10
-      objectReference: {fileID: 0}
-    - target: {fileID: 1929483961402295335, guid: 14c4fd258e5714882961f6ecb9503451, type: 3}
-      propertyPath: defaultMaxHearts
-      value: 3
-      objectReference: {fileID: 0}
-    - target: {fileID: 1929483961402295335, guid: 14c4fd258e5714882961f6ecb9503451, type: 3}
-      propertyPath: heartImages.Array.size
-      value: 10
-      objectReference: {fileID: 0}
-    - target: {fileID: 1929483961402295335, guid: 14c4fd258e5714882961f6ecb9503451, type: 3}
       propertyPath: heartImages.Array.data[0]
       value: 
       objectReference: {fileID: 557941614}
@@ -6265,22 +6253,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: Player
       objectReference: {fileID: 0}
-    - target: {fileID: 2280076338731489600, guid: 14c4fd258e5714882961f6ecb9503451, type: 3}
-      propertyPath: m_Interpolate
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 3678827243551645524, guid: 14c4fd258e5714882961f6ecb9503451, type: 3}
-      propertyPath: meleeDamage
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 3678827243551645524, guid: 14c4fd258e5714882961f6ecb9503451, type: 3}
-      propertyPath: meleeCooldown
-      value: 0.15
-      objectReference: {fileID: 0}
-    - target: {fileID: 3678827243551645524, guid: 14c4fd258e5714882961f6ecb9503451, type: 3}
-      propertyPath: rangedCooldown
-      value: 2
-      objectReference: {fileID: 0}
     - target: {fileID: 4162663679854088178, guid: 14c4fd258e5714882961f6ecb9503451, type: 3}
       propertyPath: m_LocalPosition.x
       value: -7.1
@@ -6320,10 +6292,6 @@ PrefabInstance:
     - target: {fileID: 4162663679854088178, guid: 14c4fd258e5714882961f6ecb9503451, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8646021730260426081, guid: 14c4fd258e5714882961f6ecb9503451, type: 3}
-      propertyPath: m_SortingOrder
-      value: 2
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

@@ -15,6 +15,8 @@ GameObject:
   - component: {fileID: 8357846998044641718}
   - component: {fileID: 3678827243551645524}
   - component: {fileID: 1929483961402295335}
+  - component: {fileID: 8627667351206550851}
+  - component: {fileID: 8533481486578934720}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -32,8 +34,8 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -1.53, y: -0.52, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
+  m_LocalScale: {x: 2, y: 2, z: 2}
+  m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -77,8 +79,8 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
-  m_Sprite: {fileID: 7482667652216324306, guid: 311925a002f4447b3a28927169b83ea6, type: 3}
+  m_SortingOrder: 2
+  m_Sprite: {fileID: -2133406621, guid: 9f16ef798dec64af6a17ef4b44dcd859, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -112,7 +114,7 @@ Rigidbody2D:
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
-  m_Interpolate: 0
+  m_Interpolate: 1
   m_SleepingMode: 1
   m_CollisionDetection: 0
   m_Constraints: 4
@@ -152,7 +154,7 @@ BoxCollider2D:
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 1, y: 1}
+    oldSize: {x: 0.81, y: 1.09}
     newSize: {x: 1, y: 1}
     adaptiveTilingThreshold: 0.5
     drawMode: 0
@@ -193,9 +195,11 @@ MonoBehaviour:
   attackOffsetDistance: 1.2
   meleeHitboxPrefab: {fileID: 3755717365762094065, guid: c302ccdf7cef341769390f400fd07863, type: 3}
   meleeDuration: 0.15
-  meleeCooldown: 0.35
+  meleeCooldown: 0.15
+  meleeDamage: 2
   bulletPrefab: {fileID: 1149940309504906639, guid: 696f3a6a834384589847c4e7d532daf2, type: 3}
-  rangedCooldown: 0.25
+  rangedCooldown: 2
+  rangedDamage: 1
 --- !u!114 &1929483961402295335
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -208,7 +212,58 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5d7516b17887f4786b13f0fc508c75ef, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxHearts: 3
+  defaultMaxHearts: 3
+  heartImages:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
   invincibleDuration: 1
   flashInterval: 0.1
   knockbackDuration: 0.2
+--- !u!95 &8627667351206550851
+Animator:
+  serializedVersion: 5
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1950406160110214479}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 6c282a5d0635e48d68b99a25132e89fc, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &8533481486578934720
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1950406160110214479}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b1c23cfb4e06c43818cae7ff07c4a80f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  controlMode: 0
+  idleStateName: Player_idel
+  walkDownStateName: Player_Walk_down
+  walkUpStateName: Player_Walk_Up
+  walkSideStateName: Player_side
+  flipOnMoveLeft: 1
+  attackTriggerName: Attack

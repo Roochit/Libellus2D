@@ -21,6 +21,10 @@ public class PlayerCombatCS : MonoBehaviour
 
     private Vector3 lastFacingDirection = Vector3.right; // Default หันขวา
 
+    public System.Action OnMeleeAttackTriggered;
+    public System.Action OnRangedAttackTriggered;
+    public Vector3 LastFacingDirection => lastFacingDirection;
+
     private void Awake()
     {
         if (attackPoint == null) attackPoint = transform;
@@ -122,6 +126,7 @@ public class PlayerCombatCS : MonoBehaviour
         }
 
         Destroy(meleeInstance, meleeDuration);
+        OnMeleeAttackTriggered?.Invoke();
     }
 
     private void PerformRangedAttack()
@@ -135,5 +140,7 @@ public class PlayerCombatCS : MonoBehaviour
         {
             bullet.Setup(lastFacingDirection, rangedDamage);
         }
+
+        OnRangedAttackTriggered?.Invoke();
     }
 }

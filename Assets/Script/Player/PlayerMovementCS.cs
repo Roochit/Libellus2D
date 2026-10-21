@@ -157,4 +157,6 @@ public class PlayerMovementCS : MonoBehaviour
 
     // Public Property ให้สคริปต์อื่นมาอ่านสถานะได้
     public bool IsDashing => isDashing;
+    public Vector3 MoveInput => moveInput;
+    public Vector3 LastMoveDirection => lastMoveDirection;
 }
