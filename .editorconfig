@@ -1,0 +1,17 @@
+root = true
+
+[*.cs]
+# ปิด Warning สีเหลืองสำหรับ Unity
+# CS0649: Field is never assigned to, and will always have its default value null
+dotnet_diagnostic.CS0649.severity = none
+
+# CS0414: The field is assigned but its value is never used
+dotnet_diagnostic.CS0414.severity = none
+
+# CS0169: The field is never used
+dotnet_diagnostic.CS0169.severity = none
+
+# IDE Analyzers for unused/unread members
+dotnet_diagnostic.IDE0051.severity = none
+dotnet_diagnostic.IDE0052.severity = none
+dotnet_diagnostic.IDE0044.severity = none

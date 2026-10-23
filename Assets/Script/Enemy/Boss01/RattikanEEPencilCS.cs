@@ -42,6 +42,7 @@ public class RattikanEEPencilCS : MonoBehaviour
 
     private void Update()
     {
+        if (!isInitialized) return; // รอให้ Setup ทิศทางเสร็จก่อนจึงเริ่มพุ่ง
         transform.position += moveDirection * speed * Time.deltaTime;
     }
 

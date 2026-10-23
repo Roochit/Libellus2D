@@ -18,7 +18,7 @@ public class PlayerCombatCS : MonoBehaviour
     [SerializeField] private float attackOffsetDistance = 1.2f;
 
     [Header("Melee Settings (ฟัน)")]
-    [SerializeField] private GameObject meleeHitboxPrefab;
+    [SerializeField] private GameObject meleeHitboxPrefab = default;
     [Tooltip("ตัวคูณขนาด Hitbox ของการฟัน (ค่า 1 คือขนาดปกติใน Prefab, 1.5 คือใหญ่ขึ้น 50%)")]
     [SerializeField] private Vector2 meleeHitboxScaleMultiplier = Vector2.one;
     [SerializeField] private float meleeDuration = 0.15f;
@@ -27,7 +27,7 @@ public class PlayerCombatCS : MonoBehaviour
     private float nextMeleeTime = 0f;
 
     [Header("Ranged Settings (ยิง)")]
-    [SerializeField] private GameObject bulletPrefab;
+    [SerializeField] private GameObject bulletPrefab = default;
     [SerializeField] private float rangedCooldown = 0.25f;
     [SerializeField] private int rangedDamage = 1; // ความเสียหายการยิงไกล (กระสุน)
     private float nextRangedTime = 0f;

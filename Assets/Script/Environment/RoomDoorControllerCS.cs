@@ -10,14 +10,14 @@ public class RoomDoorControllerCS : MonoBehaviour
     [SerializeField] private Collider2D doorCollider; // คอลไลเดอร์ที่ใช้บล็อกทางผู้เล่น
 
     [Header("UI Settings")]
-    [SerializeField] private TextMeshProUGUI enemyCountText; // UI Text (TextMeshPro) สำหรับแสดงจำนวนศัตรู
+    [SerializeField] private TextMeshProUGUI enemyCountText = default; // UI Text (TextMeshPro) สำหรับแสดงจำนวนศัตรู
     [SerializeField] private string textPrefix = "Enemies: "; // ข้อความนำหน้าตัวเลข เช่น "ศัตรู: "
     [SerializeField] private bool activateOnStart = false; // เริ่มต้นมาให้ทำงานและแสดงผล UI เลยหรือไม่
 
     [Header("Reward Settings")]
     [SerializeField] private bool spawnRewardOnClear = false; // สปอนของรางวัลตอนจบห้องหรือไม่
-    [SerializeField] private GameObject rewardPrefab; // Prefab ของรางวัล (เช่น กล่องสมบัติ)
-    [SerializeField] private Transform rewardSpawnPoint; // จุดที่จะสปอนของรางวัล
+    [SerializeField] private GameObject rewardPrefab = default; // Prefab ของรางวัล (เช่น กล่องสมบัติ)
+    [SerializeField] private Transform rewardSpawnPoint = default; // จุดที่จะสปอนของรางวัล
 
     private int totalEnemies;
     private bool isDoorOpen = false;

@@ -11,10 +11,10 @@ public class LobbySettingsCS : MonoBehaviour
 {
     [Header("UI References (Optional)")]
     [Tooltip("ลาก Slider ปรับเสียงมาใส่ (ถ้ามี) เพื่อให้สคริปต์ตั้งค่าเริ่มต้นของ Slider ให้ตรงกับค่าที่เคยบันทึก")]
-    [SerializeField] private Slider volumeSlider;
+    [SerializeField] private Slider volumeSlider = default;
 
     [Tooltip("ลาก Toggle ปรับเต็มจอมาใส่ (ถ้ามี) เพื่อให้สคริปต์ตั้งค่าเริ่มต้นของ Toggle ให้ตรงกับค่าที่เคยบันทึก")]
-    [SerializeField] private Toggle fullscreenToggle;
+    [SerializeField] private Toggle fullscreenToggle = default;
 
     private const string VOLUME_KEY = "MasterVolume";
     private const string FULLSCREEN_KEY = "IsFullscreen";

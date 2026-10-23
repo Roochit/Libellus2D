@@ -1,0 +1,9 @@
+<Project>
+  <PropertyGroup>
+    <!-- ปิดการแจ้งเตือน Warning สีเหลืองที่น่ารำคาญสำหรับ Unity
+         CS0649: Field is never assigned to (เกิดจาก [SerializeField] ที่ Unity เป็นคนเซ็ตค่าให้)
+         CS0414: Field is assigned but its value is never used
+    -->
+    <NoWarn>$(NoWarn);0649;0414</NoWarn>
+  </PropertyGroup>
+</Project>

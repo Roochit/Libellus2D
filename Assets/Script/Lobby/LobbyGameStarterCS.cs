@@ -16,7 +16,7 @@ public class LobbyGameStarterCS : MonoBehaviour
 
     [Header("UI Reference (Optional)")]
     [Tooltip("ปุ่มโหลดเซฟ (หากลากใส่ไว้ สคริปต์จะช่วยปิดการกดปุ่มให้อัตโนมัติหากไม่มีไฟล์เซฟ)")]
-    [SerializeField] private Button loadSaveButton;
+    [SerializeField] private Button loadSaveButton = default;
 
     private string saveFilePath;
 

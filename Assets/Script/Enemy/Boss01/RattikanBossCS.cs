@@ -22,14 +22,14 @@ public class RattikanBossCS : EnemyCS
     [SerializeField] private string bossName = "อาจารย์รัตติกาล (LV01)";
     [TextArea(2, 4)]
     [SerializeField] private string introQuote = "ก่อนจะไปซื้อเกมมาเล่น ส่งธีสิทอาจารย์ก่อนมั้ย";
-    [SerializeField] private TextMeshProUGUI dialogueTextUI; // UI แสดงข้อความพูดของบอส (ถ้ามี)
+    [SerializeField] private TextMeshProUGUI dialogueTextUI = default; // UI แสดงข้อความพูดของบอส (ถ้ามี)
     [SerializeField] private float dialogueDuration = 3f;
 
     [Header("=== Boss Health & Armor ===")]
     [SerializeField] private int bossMaxHearts = 25; // หลอดเลือดบอสเริ่มต้น (เช่น 25 หัวใจ)
     [SerializeField] private bool hasSuperArmor = true; // บอสไม่กระเด็นถอยหลังจากดาเมจธรรมดา
-    [SerializeField] private Slider bossHealthSlider; // แถบเลือดบอสใน UI (ถ้ามี)
-    [SerializeField] private TextMeshProUGUI bossHealthText; // ตัวเลขเลือดบอสใน UI (ถ้ามี)
+    [SerializeField] private Slider bossHealthSlider = default; // แถบเลือดบอสใน UI (ถ้ามี)
+    [SerializeField] private TextMeshProUGUI bossHealthText = default; // ตัวเลขเลือดบอสใน UI (ถ้ามี)
 
     [Header("=== Attack Timers & Settings ===")]
     [SerializeField] private float attackIntervalPhase1 = 2.5f; // ระยะเวลาพักระหว่างท่าใน Phase 1
@@ -38,13 +38,13 @@ public class RattikanBossCS : EnemyCS
     [SerializeField] private float preferredPlayerDistance = 4.0f; // ระยะห่างที่บอสพยายามรักษาไว้
 
     [Header("=== Attack 1: ดินสอ EE พิฆาต 8 ทิศ ===")]
-    [SerializeField] private GameObject eePencilPrefab; // Prefab ดินสอ EE (มีสคริปต์ RattikanEEPencilCS หรือ EnemyBulletCS)
+    [SerializeField] private GameObject eePencilPrefab = default; // Prefab ดินสอ EE (มีสคริปต์ RattikanEEPencilCS หรือ EnemyBulletCS)
     [SerializeField] private float pencilSpeed = 8f;
     [SerializeField] private int pencilWavesPhase1 = 1; // จำนวนระลอกในเฟส 1
     [SerializeField] private int pencilWavesPhase2 = 2; // จำนวนระลอกในเฟส 2
 
     [Header("=== Attack 2: กระดานวาดรูปวนรอบตัวเอง ===")]
-    [SerializeField] private GameObject drawingBoardPrefab; // Prefab กระดานวาดรูป
+    [SerializeField] private GameObject drawingBoardPrefab = default;  // Prefab กระดานวาดรูป
     [SerializeField] private int boardCountPhase1 = 4; // จำนวน 4 แผ่นตาม PDF
     [SerializeField] private int boardCountPhase2 = 6; // เฟส 2 เพิ่มเป็น 6 แผ่น
     [SerializeField] private float boardOrbitRadius = 2.6f;
@@ -52,13 +52,13 @@ public class RattikanBossCS : EnemyCS
     [SerializeField] private float boardDuration = 6.0f;
 
     [Header("=== Attack 3: มีดคัดเตอร์สุ่มแทงจากพื้น ===")]
-    [SerializeField] private GameObject cutterTrapPrefab; // Prefab มีดคัดเตอร์แทงพื้น
+    [SerializeField] private GameObject cutterTrapPrefab = default; // Prefab มีดคัดเตอร์แทงพื้น
     [SerializeField] private int cutterCountPhase1 = 6; // สุ่มแทง 6 จุด
     [SerializeField] private int cutterCountPhase2 = 10; // เฟส 2 สุ่มแทง 10 จุด
     [SerializeField] private float cutterSpawnRadius = 5.0f; // รัศมีสุ่มรอบตัวผู้เล่น
 
     [Header("=== Attack 4: ลำแสงไม้บรรทัดยิงทะลุจอมาจากข้างจอ ===")]
-    [SerializeField] private GameObject rulerBeamPrefab; // Prefab ลำแสงไม้บรรทัด
+    [SerializeField] private GameObject rulerBeamPrefab = default; // Prefab ลำแสงไม้บรรทัด
     [SerializeField] private Transform mouthPoint; // จุดยิงบริเวณปากของบอส (ไม่บังคับใช้)
     [SerializeField] private float beamLength = 120f; // ความยาวลำแสง (พุ่งทะลุข้ามจอมาจากข้างจอ)
     [SerializeField] private float beamDuration = 1.6f; // ระยะเวลาที่ลำแสงพุ่งค้างอยู่

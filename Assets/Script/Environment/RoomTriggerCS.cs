@@ -3,7 +3,7 @@ using UnityEngine;
 public class RoomTriggerCS : MonoBehaviour
 {
     [Header("Room Door System Link")]
-    [SerializeField] private RoomDoorControllerCS doorController; // เชื่อมโยงสคริปต์ควบคุมประตูของห้องนี้
+    [SerializeField] private RoomDoorControllerCS doorController = default; // เชื่อมโยงสคริปต์ควบคุมประตูของห้องนี้
 
     private void OnTriggerEnter2D(Collider2D collision)
     {

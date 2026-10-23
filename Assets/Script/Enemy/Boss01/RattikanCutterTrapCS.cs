@@ -15,7 +15,7 @@ public class RattikanCutterTrapCS : MonoBehaviour
     [SerializeField] private int damage = 1;
 
     [Header("Visual References")]
-    [SerializeField] private GameObject warningIndicator; // วัตถุแสดงสัญญาณเตือน (เช่น รอยตัด/วงกลมสีแดง)
+    [SerializeField] private GameObject warningIndicator = default; // วัตถุแสดงสัญญาณเตือน (เช่น รอยตัด/วงกลมสีแดง)
     [SerializeField] private Transform bladeTransform; // วัตถุใบมีดที่จะแทงขึ้นมา
     [SerializeField] private Collider2D damageCollider; // คอลไลเดอร์ทำดาเมจของใบมีด
     [SerializeField] private float thrustHeight = 1.5f; // ความสูงที่ใบมีดแทงขึ้นมา

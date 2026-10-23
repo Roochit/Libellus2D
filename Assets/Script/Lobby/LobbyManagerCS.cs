@@ -28,14 +28,14 @@ public class LobbyManagerCS : MonoBehaviour
 
     [Header("2. Save System (Optional)")]
     [Tooltip("ปุ่มโหลดเซฟ (หากลากใส่ไว้ สคริปต์จะช่วยเปิด/ปิดปุ่มตามการมีอยู่ของไฟล์เซฟให้อัตโนมัติ)")]
-    [SerializeField] private Button loadSaveButton;
+    [SerializeField] private Button loadSaveButton = default;
 
     [Header("3. Settings References (Optional)")]
     [Tooltip("Slider ปรับเสียง (สคริปต์จะดึงค่าที่เคยเซฟไว้มาใส่ให้ตอนเริ่ม)")]
-    [SerializeField] private Slider volumeSlider;
+    [SerializeField] private Slider volumeSlider = default;
 
     [Tooltip("Toggle ปรับเต็มจอ (สคริปต์จะดึงค่าที่เคยเซฟไว้มาใส่ให้ตอนเริ่ม)")]
-    [SerializeField] private Toggle fullscreenToggle;
+    [SerializeField] private Toggle fullscreenToggle = default;
 
     private string saveFilePath;
     private const string VOLUME_KEY = "MasterVolume";

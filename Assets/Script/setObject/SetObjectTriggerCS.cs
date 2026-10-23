@@ -3,11 +3,13 @@ using UnityEngine;
 public class SetObjectTriggerCS : MonoBehaviour
 {
     [Header("Objects to Activate (เปิดการทำงาน)")]
-    [SerializeField] private GameObject[] objectsToActivate;
+    #pragma warning disable CS0649
+    [SerializeField] private GameObject[] objectsToActivate = default;
 
     [Header("Objects to Deactivate (ปิดการทำงาน)")]
-    [SerializeField] private GameObject[] objectsToDeactivate;
-
+    [SerializeField] private GameObject[] objectsToDeactivate = default;
+    #pragma warning restore CS0649
+    
     [Header("Trigger Behavior settings")]
     [SerializeField] private bool triggerOnlyOnce = true; // ทำงานแค่ครั้งแรกครั้งเดียวหรือไม่
 

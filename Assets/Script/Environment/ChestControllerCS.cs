@@ -4,10 +4,10 @@ using System.Collections;
 public class ChestControllerCS : MonoBehaviour
 {
     [Header("Chest Visuals")]
-    [SerializeField] private Sprite openChestSprite; // รูปภาพกล่องตอนเปิดออกแล้ว
+    [SerializeField] private Sprite openChestSprite = default; // รูปภาพกล่องตอนเปิดออกแล้ว
 
     [Header("Drop Settings")]
-    [SerializeField] private GameObject itemToDropPrefab; // วัตถุที่จะดรอป (เช่น Prefab หัวใจ)
+    [SerializeField] private GameObject itemToDropPrefab = default; // วัตถุที่จะดรอป (เช่น Prefab หัวใจ)
     [SerializeField] private int dropCount = 2; // จำนวนของที่จะดรอป
     [SerializeField] private float dropForce = 5f; // แรงผลักกระสุน/ไอเทมกระเด็นออกจากกล่อง
 

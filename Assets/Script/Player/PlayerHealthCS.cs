@@ -13,7 +13,7 @@ public class PlayerHealthCS : MonoBehaviour
     private const int ABSOLUTE_MAX_HEARTS = 10; // ลิมิตสูงสุดของหัวใจที่เก็บได้
 
     [Header("UI Settings")]
-    [SerializeField] private GameObject[] heartImages; // อาร์เรย์ของวัตถุรูปหัวใจ UI (ลากมาใส่ใน Inspector)
+    [SerializeField] private GameObject[] heartImages = default; // อาร์เรย์ของวัตถุรูปหัวใจ UI (ลากมาใส่ใน Inspector)
 
     [Header("Invincibility & Flash Settings")]
     [SerializeField] private float invincibleDuration = 1.0f; // ระยะเวลาอมตะหลังโดนตี (วินาที)
