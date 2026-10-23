@@ -42,6 +42,8 @@ public class EnemyCS : MonoBehaviour
     protected Color originalColor;
     protected Coroutine flashCoroutine;
 
+    public System.Action OnAttackTriggered;
+
     protected virtual void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
@@ -193,6 +195,8 @@ public class EnemyCS : MonoBehaviour
         {
             animator.SetTrigger("Attack");
         }
+
+        OnAttackTriggered?.Invoke();
 
         if (enemyType == EnemyType.Melee)
         {
