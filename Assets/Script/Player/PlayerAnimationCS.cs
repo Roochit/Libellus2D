@@ -2,46 +2,24 @@ using System.Collections;
 using UnityEngine;
 
 /// <summary>
-/// ระบบควบคุมการเล่น Animation, การกลับด้านตัวละคร (FlipX)
-/// และรองรับท่าเดิน, ท่ายืนนิ่ง, ท่าหลบ/พุ่ง (Dash), และท่าฟันโจมตี 3 ทิศทาง (Melee Attack)
+/// ระบบควบคุม Animation ของ Player ผ่าน Animator Parameters และ Transitions (100% Parameters):
+/// - isMoving (Bool), moveX (Float), moveY (Float), state (Int: 0=Idle, 1=WalkDown, 2=WalkUp, 3=WalkSide, 4=Dash, 5=AttackDown, 6=AttackUp, 7=AttackSide)
+/// - Triggers: Dash, Attack, AttackSide, AttackUp, AttackDown
+/// - ควบคุมการหันหน้าซ้าย-ขวาผ่าน SpriteRenderer (FlipX)
 /// </summary>
 [RequireComponent(typeof(SpriteRenderer))]
 public class PlayerAnimationCS : MonoBehaviour
 {
-    public enum ControlMode
-    {
-        AnimatorParameters, // ใช้ Parameters & Transitions ใน Animator (state, isMoving, moveX, moveY, triggers)
-        DirectPlay          // สั่งเล่น State โดยตรงตามชื่อคลิป (animator.Play) ไม่ต้องเซ็ต Transitions ให้ยุ่งยาก
-    }
-
-    [Header("โหมดการควบคุม Animation")]
-    [Tooltip("เลือกวิธีที่ต้องการควบคุม Animator")]
-    [SerializeField] private ControlMode controlMode = ControlMode.AnimatorParameters;
-
-    [Header("ชื่อ State ท่ายืนและท่าเดิน")]
-    [SerializeField] private string idleStateName = "Player_idel";
-    [SerializeField] private string walkDownStateName = "Player_Walk_down";
-    [SerializeField] private string walkUpStateName = "Player_Walk_Up";
-    [SerializeField] private string walkSideStateName = "Player_side";
-
-    [Header("ชื่อ State ท่าหลบ (Dash)")]
-    [SerializeField] private string dashStateName = "Player_Dash";
-
-    [Header("ชื่อ State ท่าฟันโจมตี (Melee Attack)")]
-    [SerializeField] private string attackUpStateName = "PlayerAttack_Melee_Up";
-    [SerializeField] private string attackDownStateName = "PlayerAttack_Melee_Down";
-    [SerializeField] private string attackSideStateName = "PlayerAttack_Melee_Side";
-
     [Header("การหันหน้าตัวละคร (Sprite Flipping)")]
     [Tooltip("กลับด้าน SpriteRenderer แนวนอนเมื่อเดินหรือฟันไปทางซ้าย")]
     [SerializeField] private bool flipOnMoveLeft = true;
 
     // References
-    private Animator animator;
-    private SpriteRenderer spriteRenderer;
-    private PlayerMovementCS playerMovement;
-    private PlayerCombatCS playerCombat;
-    private Rigidbody2D rb;
+    private Animator animator = default;
+    private SpriteRenderer spriteRenderer = default;
+    private PlayerMovementCS playerMovement = default;
+    private PlayerCombatCS playerCombat = default;
+    private Rigidbody2D rb = default;
 
     // Hashes เพื่อประสิทธิภาพ
     private int stateHash;
@@ -68,7 +46,6 @@ public class PlayerAnimationCS : MonoBehaviour
     private bool hasParamAttackSide = false;
 
     // Tracking ปัจจุบัน
-    private string currentPlayingState = "";
     private int currentStateInt = 0; // 0=Idle, 1=WalkDown, 2=WalkUp, 3=WalkSide, 4=Dash, 5=AttackDown, 6=AttackUp, 7=AttackSide
     private bool isAttacking = false;
     private Coroutine attackRoutine;
@@ -198,40 +175,33 @@ public class PlayerAnimationCS : MonoBehaviour
     private void UpdateLocomotionAnimation(Vector3 moveInput)
     {
         bool isMoving = moveInput.sqrMagnitude > 0.01f;
-
-        string targetStateName;
         int targetStateInt;
 
         if (!isMoving)
         {
-            targetStateName = idleStateName;
-            targetStateInt = 0;
+            targetStateInt = 0; // Idle
         }
         else
         {
             if (Mathf.Abs(moveInput.x) > Mathf.Abs(moveInput.y))
             {
-                targetStateName = walkSideStateName;
-                targetStateInt = 3;
-
+                targetStateInt = 3; // Walk Side
                 ApplyHorizontalFlip(moveInput.x);
             }
             else
             {
                 if (moveInput.y > 0.01f)
                 {
-                    targetStateName = walkUpStateName;
-                    targetStateInt = 2;
+                    targetStateInt = 2; // Walk Up
                 }
                 else
                 {
-                    targetStateName = walkDownStateName;
-                    targetStateInt = 1;
+                    targetStateInt = 1; // Walk Down
                 }
             }
         }
 
-        ApplyAnimation(targetStateName, targetStateInt, isMoving, moveInput, false);
+        ApplyAnimation(targetStateInt, isMoving, moveInput, false);
     }
 
     /// <summary>
@@ -242,7 +212,7 @@ public class PlayerAnimationCS : MonoBehaviour
         Vector3 dashDir = playerMovement != null ? playerMovement.LastMoveDirection : Vector3.down;
         ApplyHorizontalFlip(dashDir.x);
 
-        ApplyAnimation(dashStateName, 4, true, dashDir, true);
+        ApplyAnimation(4, true, dashDir, true); // 4 = Dash
     }
 
     /// <summary>
@@ -263,28 +233,17 @@ public class PlayerAnimationCS : MonoBehaviour
     }
 
     /// <summary>
-    /// ส่งคำสั่งไปยัง Animator ตามโหมดที่เลือก
+    /// ส่ง Parameters ไปยัง Animator
     /// </summary>
-    private void ApplyAnimation(string stateName, int stateInt, bool isMoving, Vector3 dir, bool isDashing)
+    private void ApplyAnimation(int stateInt, bool isMoving, Vector3 dir, bool isDashing)
     {
         currentStateInt = stateInt;
 
-        if (controlMode == ControlMode.DirectPlay)
-        {
-            if (currentPlayingState != stateName)
-            {
-                currentPlayingState = stateName;
-                animator.Play(stateName);
-            }
-        }
-        else
-        {
-            if (hasParamState) animator.SetInteger(stateHash, stateInt);
-            if (hasParamIsMoving) animator.SetBool(isMovingHash, isMoving);
-            if (hasParamMoveX) animator.SetFloat(moveXHash, dir.x);
-            if (hasParamMoveY) animator.SetFloat(moveYHash, dir.y);
-            if (hasParamIsDashing) animator.SetBool(isDashingHash, isDashing);
-        }
+        if (hasParamState) animator.SetInteger(stateHash, stateInt);
+        if (hasParamIsMoving) animator.SetBool(isMovingHash, isMoving);
+        if (hasParamMoveX) animator.SetFloat(moveXHash, dir.x);
+        if (hasParamMoveY) animator.SetFloat(moveYHash, dir.y);
+        if (hasParamIsDashing) animator.SetBool(isDashingHash, isDashing);
     }
 
     /// <summary>
@@ -308,14 +267,12 @@ public class PlayerAnimationCS : MonoBehaviour
         Vector3 facingDir = playerCombat != null ? playerCombat.LastFacingDirection : Vector3.down;
         float attackDuration = playerCombat != null ? Mathf.Max(0.15f, playerCombat.MeleeDuration) : 0.2f;
 
-        string attackStateName;
         int attackStateInt;
 
         // คำนวณทิศทางของการฟัน
         if (Mathf.Abs(facingDir.x) > Mathf.Abs(facingDir.y))
         {
-            attackStateName = attackSideStateName;
-            attackStateInt = 7;
+            attackStateInt = 7; // Attack Side
             ApplyHorizontalFlip(facingDir.x);
 
             if (hasParamAttackSide) animator.SetTrigger(attackSideHash);
@@ -324,14 +281,12 @@ public class PlayerAnimationCS : MonoBehaviour
         {
             if (facingDir.y > 0.01f)
             {
-                attackStateName = attackUpStateName;
-                attackStateInt = 6;
+                attackStateInt = 6; // Attack Up
                 if (hasParamAttackUp) animator.SetTrigger(attackUpHash);
             }
             else
             {
-                attackStateName = attackDownStateName;
-                attackStateInt = 5;
+                attackStateInt = 5; // Attack Down
                 if (hasParamAttackDown) animator.SetTrigger(attackDownHash);
             }
         }
@@ -343,20 +298,15 @@ public class PlayerAnimationCS : MonoBehaviour
 
         // เริ่มเล่นท่าโจมตีและล็อกไว้ตามระยะเวลาโจมตี
         if (attackRoutine != null) StopCoroutine(attackRoutine);
-        attackRoutine = StartCoroutine(PerformAttackAnimationRoutine(attackStateName, attackStateInt, attackDuration));
+        attackRoutine = StartCoroutine(PerformAttackAnimationRoutine(attackStateInt, attackDuration));
     }
 
-    private IEnumerator PerformAttackAnimationRoutine(string attackStateName, int attackStateInt, float duration)
+    private IEnumerator PerformAttackAnimationRoutine(int attackStateInt, float duration)
     {
         isAttacking = true;
-        currentPlayingState = attackStateName;
         currentStateInt = attackStateInt;
 
-        if (controlMode == ControlMode.DirectPlay)
-        {
-            animator.Play(attackStateName, 0, 0f);
-        }
-        else if (hasParamState)
+        if (hasParamState)
         {
             animator.SetInteger(stateHash, attackStateInt);
         }

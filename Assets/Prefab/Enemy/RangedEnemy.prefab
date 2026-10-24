@@ -13,6 +13,8 @@ GameObject:
   - component: {fileID: 292388758155598588}
   - component: {fileID: 8125665121989575162}
   - component: {fileID: 411102955353867461}
+  - component: {fileID: 6802574659370464441}
+  - component: {fileID: 7211034995958555132}
   m_Layer: 0
   m_Name: RangedEnemy
   m_TagString: Untagged
@@ -30,7 +32,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -40.7, y: 20.1, z: 0.2529108}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 0.5, y: 0.5, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -76,7 +78,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Sprite: {fileID: 7482667652216324306, guid: 75f5f34dc1b5347e0b8351032682f224, type: 3}
+  m_Sprite: {fileID: 353101136, guid: 31539d0b8a68f463da3054e77da6b844, type: 3}
   m_Color: {r: 1, g: 0.6795887, b: 0.25, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -119,18 +121,18 @@ BoxCollider2D:
   m_IsTrigger: 0
   m_UsedByEffector: 0
   m_UsedByComposite: 0
-  m_Offset: {x: 0, y: 0.21133333}
+  m_Offset: {x: -0.0052948, y: 0.107219815}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
-    pivot: {x: 0.5, y: 0.28866667}
-    oldSize: {x: 1, y: 1}
+    pivot: {x: 0.5, y: 0.5}
+    oldSize: {x: 2.29, y: 2.73}
     newSize: {x: 1, y: 1}
     adaptiveTilingThreshold: 0.5
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
   serializedVersion: 2
-  m_Size: {x: 1, y: 1}
+  m_Size: {x: 2.3689651, y: 2.5964072}
   m_EdgeRadius: 0
 --- !u!50 &8125665121989575162
 Rigidbody2D:
@@ -172,10 +174,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   enemyType: 1
-  moveSpeed: 3
+  moveSpeed: 0
   detectionRadius: 8
   attackRange: 12
-  attackCooldown: 1.5
+  attackCooldown: 2
   damage: 10
   meleeHitboxPrefab: {fileID: 0}
   bulletPrefab: {fileID: 1149940309504906639, guid: bf03c49f0ebb5440dbb7ca69d9f8735c, type: 3}
@@ -185,3 +187,41 @@ MonoBehaviour:
   damageFlashColor: {r: 1, g: 0, b: 0, a: 1}
   flashDuration: 0.15
   maxHearts: 2
+--- !u!95 &6802574659370464441
+Animator:
+  serializedVersion: 5
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3390925131852495053}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 3d5f5e959858c485ab2c34e0f8dac627, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &7211034995958555132
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3390925131852495053}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2364db50fc5a74282ba391d0a9df90f7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  animationMode: 1
+  idleStateName: Enemy_Bullet_idel
+  attackStateName: Enemy_Bullet_Attack
+  attackDuration: 0.2
+  useSpriteFlipX: 0

@@ -1,45 +1,28 @@
-using System.Collections;
 using UnityEngine;
 
 /// <summary>
 /// สคริปต์ควบคุม Animation สำหรับตัวร้ายยิงธนู (Ranged Enemy)
-/// มี 2 ท่าหลัก:
-/// 1. ท่ายืน (Idle) - Enemy_Bullet_idel
-/// 2. ท่ายิง/โจมตี (Attack) - Enemy_Bullet_Attack
-/// รองรับทั้งโหมด DirectPlay (สั่งเล่นผ่านโค้ดได้ทันที) และโหมด Animator Trigger ("Attack")
+/// ทำงานผ่านระบบ Animator Parameters และ Transitions (Trigger "Attack") 100%
+/// เมื่อศัตรูถึงระยะยิงและคูลดาวน์พร้อม สคริปต์จะยิง Trigger "Attack" เข้า Animator ทันที
 /// </summary>
 [RequireComponent(typeof(Animator))]
 public class RangedEnemyAnimationCS : MonoBehaviour
 {
-    public enum AnimationMode
-    {
-        DirectPlay,      // สั่งเล่น State โดยตรงผ่านโค้ด (ง่ายที่สุด ไม่ต้องตั้งค่า Parameter ใน Animator)
-        AnimatorTrigger  // ใช้ Trigger "Attack" ใน Animator ตามมาตรฐาน Unity
-    }
-
-    [Header("โหมดการทำงาน")]
-    [Tooltip("DirectPlay = เล่นชื่อคลิปตรงๆ ไม่ต้องต่อสาย, AnimatorTrigger = ใช้ Trigger Attack ใน Animator")]
-    [SerializeField] private AnimationMode animationMode = AnimationMode.DirectPlay;
-
-    [Header("ชื่อ State ใน Animator")]
-    [SerializeField] private string idleStateName = "Enemy_Bullet_idel";
-    [SerializeField] private string attackStateName = "Enemy_Bullet_Attack";
-
-    [Header("การตั้งค่าเวลาโจมตี")]
-    [Tooltip("ระยะเวลาการแสดงท่าโจมตี (วินาที) ก่อนจะสลับกลับเป็นท่ายืน")]
-    [SerializeField] private float attackDuration = 0.35f;
+    [Header("การตั้งค่า Parameter ใน Animator")]
+    [Tooltip("ชื่อพารามิเตอร์ Trigger ใน Animator สำหรับสั่งท่าโจมตียิงธนู")]
+    [SerializeField] private string attackTriggerParam = "Attack";
 
     [Header("การหันหน้า (Flip)")]
     [Tooltip("เปิดถ้าต้องการให้สคริปต์นี้สลับ spriteRenderer.flipX เอง (หาก EnemyCS ควบคุม localScale อยู่แล้ว ให้ปิดไว้)")]
     [SerializeField] private bool useSpriteFlipX = false;
 
-    private Animator animator;
-    private EnemyCS enemyCS;
-    private SpriteRenderer spriteRenderer;
-    private Transform playerTransform;
+    private Animator animator = default;
+    private EnemyCS enemyCS = default;
+    private SpriteRenderer spriteRenderer = default;
+    private Transform playerTransform = default;
 
-    private bool isAttacking = false;
-    private Coroutine attackCoroutine;
+    private int attackTriggerHash;
+    private bool hasAttackParam = false;
 
     private void Awake()
     {
@@ -51,6 +34,9 @@ public class RangedEnemyAnimationCS : MonoBehaviour
 
         enemyCS = GetComponent<EnemyCS>();
         spriteRenderer = GetComponent<SpriteRenderer>();
+
+        attackTriggerHash = Animator.StringToHash(attackTriggerParam);
+        CheckAnimatorParameters();
     }
 
     private void Start()
@@ -60,9 +46,6 @@ public class RangedEnemyAnimationCS : MonoBehaviour
         {
             playerTransform = playerObj.transform;
         }
-
-        // เริ่มต้นด้วยท่ายืน
-        PlayIdle();
     }
 
     private void OnEnable()
@@ -99,46 +82,33 @@ public class RangedEnemyAnimationCS : MonoBehaviour
     }
 
     /// <summary>
-    /// สั่งเล่นแอนิเมชันท่ายืน (Idle)
-    /// </summary>
-    public void PlayIdle()
-    {
-        if (isAttacking) return;
-
-        if (animator != null && animationMode == AnimationMode.DirectPlay)
-        {
-            animator.Play(idleStateName);
-        }
-    }
-
-    /// <summary>
-    /// สั่งเล่นแอนิเมชันท่ายิงโจมตี (Attack)
+    /// สั่ง Trigger ท่ายิงโจมตี (Attack) เข้า Animator
     /// </summary>
     public void PlayAttackAnimation()
     {
         if (animator == null) return;
 
-        if (animationMode == AnimationMode.DirectPlay)
+        if (hasAttackParam)
         {
-            if (attackCoroutine != null) StopCoroutine(attackCoroutine);
-            attackCoroutine = StartCoroutine(AttackAnimationRoutine());
+            animator.SetTrigger(attackTriggerHash);
         }
         else
         {
-            // โหมด Animator Trigger
             animator.SetTrigger("Attack");
         }
     }
 
-    private IEnumerator AttackAnimationRoutine()
+    private void CheckAnimatorParameters()
     {
-        isAttacking = true;
-        animator.Play(attackStateName, 0, 0f);
+        if (animator == null) return;
 
-        yield return new WaitForSeconds(attackDuration);
-
-        isAttacking = false;
-        animator.Play(idleStateName);
-        attackCoroutine = null;
+        foreach (var param in animator.parameters)
+        {
+            if (param.name == attackTriggerParam)
+            {
+                hasAttackParam = true;
+                break;
+            }
+        }
     }
 }

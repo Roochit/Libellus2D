@@ -43,6 +43,11 @@ public class EnemyCS : MonoBehaviour
     protected Coroutine flashCoroutine;
 
     public System.Action OnAttackTriggered;
+    public System.Action<Vector2> OnAttackWithDirection;
+    public System.Action OnDamaged;
+
+    public bool IsKnockedBack => isKnockedBack;
+    public Transform PlayerTarget => playerTransform;
 
     protected virtual void Awake()
     {
@@ -190,6 +195,9 @@ public class EnemyCS : MonoBehaviour
     {
         nextAttackTime = Time.time + attackCooldown;
 
+        Vector3 attackDir = (playerTransform != null) ? (playerTransform.position - transform.position).normalized : Vector3.right;
+        if (attackDir == Vector3.zero) attackDir = Vector3.right;
+
         // เล่นอนิเมชันโจมตี (ถ้ามีพารามิเตอร์ Attack ใน Animator)
         if (animator != null)
         {
@@ -197,6 +205,7 @@ public class EnemyCS : MonoBehaviour
         }
 
         OnAttackTriggered?.Invoke();
+        OnAttackWithDirection?.Invoke(attackDir);
 
         if (enemyType == EnemyType.Melee)
         {
@@ -205,9 +214,6 @@ public class EnemyCS : MonoBehaviour
             // สร้าง Hitbox โจมตีประชิดของศัตรู
             if (meleeHitboxPrefab != null && playerTransform != null)
             {
-                Vector3 attackDir = (playerTransform.position - transform.position).normalized;
-                if (attackDir == Vector3.zero) attackDir = Vector3.right;
-
                 Vector3 spawnPosition = transform.position + (attackDir * attackOffsetDistance);
                 float angle = Mathf.Atan2(attackDir.y, attackDir.x) * Mathf.Rad2Deg;
                 Quaternion spawnRotation = Quaternion.Euler(0, 0, angle);
@@ -223,9 +229,6 @@ public class EnemyCS : MonoBehaviour
 
             if (bulletPrefab != null && playerTransform != null)
             {
-                Vector3 attackDir = (playerTransform.position - transform.position).normalized;
-                if (attackDir == Vector3.zero) attackDir = Vector3.right;
-
                 Vector3 spawnPosition = transform.position + (attackDir * attackOffsetDistance);
                 
                 // สร้างกระสุน
@@ -244,6 +247,8 @@ public class EnemyCS : MonoBehaviour
 
         currentHearts -= amount;
         Debug.Log($"Enemy hit! Current Hearts: {currentHearts}/{maxHearts}");
+
+        OnDamaged?.Invoke();
 
         ApplyKnockback(knockbackDirection);
 
