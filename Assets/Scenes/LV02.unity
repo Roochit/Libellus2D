@@ -11776,11 +11776,11 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 225134567550301783, guid: 79ff9fb54b8494470a8d80e5c3ac9551, type: 3}
       propertyPath: attackRange
-      value: 1
+      value: 2.4
       objectReference: {fileID: 0}
     - target: {fileID: 225134567550301783, guid: 79ff9fb54b8494470a8d80e5c3ac9551, type: 3}
       propertyPath: attackCooldown
-      value: 3
+      value: 1.5
       objectReference: {fileID: 0}
     - target: {fileID: 1714390065553246991, guid: 79ff9fb54b8494470a8d80e5c3ac9551, type: 3}
       propertyPath: m_LocalScale.x

@@ -92,7 +92,6 @@ public class EnemySwordAnimationCS : MonoBehaviour
         if (enemyCS != null)
         {
             enemyCS.OnAttackWithDirection += HandleAttackWithDirection;
-            enemyCS.OnAttackTriggered += HandleGenericAttack;
         }
     }
 
@@ -101,7 +100,6 @@ public class EnemySwordAnimationCS : MonoBehaviour
         if (enemyCS != null)
         {
             enemyCS.OnAttackWithDirection -= HandleAttackWithDirection;
-            enemyCS.OnAttackTriggered -= HandleGenericAttack;
         }
     }
 
@@ -139,6 +137,13 @@ public class EnemySwordAnimationCS : MonoBehaviour
     /// </summary>
     private void UpdateMovementParameters()
     {
+        // หากศัตรูกำลังเล่นท่าโจมตีอยู่ ให้ตั้ง isMoving เป็น false เสมอเพื่อไม่ให้ไปตัดแอนิเมชันโจมตี
+        if (enemyCS != null && enemyCS.IsAttacking)
+        {
+            if (hasParamIsMoving) animator.SetBool(isMovingHash, false);
+            return;
+        }
+
         Vector2 velocity = (rb != null) ? rb.velocity : Vector2.zero;
         bool isMoving = velocity.magnitude > 0.1f;
 
@@ -167,38 +172,28 @@ public class EnemySwordAnimationCS : MonoBehaviour
     {
         if (animator == null) return;
 
-        // attackDir.y > 0.5f  => ฟันขึ้นบน (AttackUp)
-        // attackDir.y < -0.5f => ฟันลงล่าง (AttackDown)
-        // อื่นๆ (แนวนอน)       => ฟันไปข้างๆ (AttackSide)
-        if (attackDir.y > 0.5f)
+        // คำนวณว่าทิศทางเป้าหมายเน้นแนวตั้ง (ขึ้น/ลง) หรือแนวนอน (ข้าง)
+        if (Mathf.Abs(attackDir.y) > Mathf.Abs(attackDir.x))
         {
-            if (hasParamAttackUp) animator.SetTrigger(attackUpHash);
-            else if (hasParamGeneralAttack) animator.SetTrigger(generalAttackHash);
-        }
-        else if (attackDir.y < -0.5f)
-        {
-            if (hasParamAttackDown) animator.SetTrigger(attackDownHash);
-            else if (hasParamGeneralAttack) animator.SetTrigger(generalAttackHash);
+            if (attackDir.y > 0)
+            {
+                // ฟันขึ้นบน (AttackUp)
+                if (hasParamAttackUp) animator.SetTrigger(attackUpHash);
+                else if (hasParamGeneralAttack) animator.SetTrigger(generalAttackHash);
+            }
+            else
+            {
+                // ฟันลงล่าง (AttackDown)
+                if (hasParamAttackDown) animator.SetTrigger(attackDownHash);
+                else if (hasParamGeneralAttack) animator.SetTrigger(generalAttackHash);
+            }
         }
         else
         {
+            // ฟันแนวนอน (AttackSide) ระบบจะหันซ้าย/ขวาผ่าน Flip localScale หรือ FlipX
             if (hasParamAttackSide) animator.SetTrigger(attackSideHash);
             else if (hasParamGeneralAttack) animator.SetTrigger(generalAttackHash);
         }
-    }
-
-    /// <summary>
-    /// เผื่อกรณี EnemyCS ยิง OnAttackTriggered แบบไม่มีทิศทาง
-    /// </summary>
-    private void HandleGenericAttack()
-    {
-        Vector2 dir = Vector2.right;
-        if (playerTransform != null)
-        {
-            dir = (playerTransform.position - transform.position).normalized;
-        }
-
-        HandleAttackWithDirection(dir);
     }
 
     /// <summary>

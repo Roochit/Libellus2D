@@ -4019,11 +4019,11 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 225134567550301783, guid: 79ff9fb54b8494470a8d80e5c3ac9551, type: 3}
       propertyPath: attackRange
-      value: 1
+      value: 2.4
       objectReference: {fileID: 0}
     - target: {fileID: 225134567550301783, guid: 79ff9fb54b8494470a8d80e5c3ac9551, type: 3}
       propertyPath: attackCooldown
-      value: 3
+      value: 1.5
       objectReference: {fileID: 0}
     - target: {fileID: 1714390065553246991, guid: 79ff9fb54b8494470a8d80e5c3ac9551, type: 3}
       propertyPath: m_LocalScale.x
@@ -4766,6 +4766,7 @@ MonoBehaviour:
   meleeHitboxPrefab: {fileID: 3755717365762094065, guid: a2954cd097c114e2db7337d9111407d7, type: 3}
   bulletPrefab: {fileID: 1149940309504906639, guid: bf03c49f0ebb5440dbb7ca69d9f8735c, type: 3}
   attackOffsetDistance: 1
+  dealsContactDamage: 0
   knockbackForce: 6
   knockbackDuration: 0.25
   damageFlashColor: {r: 1, g: 0, b: 0, a: 1}
@@ -4777,7 +4778,7 @@ MonoBehaviour:
     \u0E2A\u0E48\u0E07\u0E18\u0E35\u0E2A\u0E34\u0E17\u0E2D\u0E32\u0E08\u0E32\u0E23\u0E22\u0E4C\u0E01\u0E48\u0E2D\u0E19\u0E21\u0E31\u0E49\u0E22"
   dialogueTextUI: {fileID: 821613425}
   dialogueDuration: 3
-  bossMaxHearts: 20
+  bossMaxHearts: 50
   hasSuperArmor: 1
   bossHealthSlider: {fileID: 503492248}
   bossHealthText: {fileID: 1331591020}

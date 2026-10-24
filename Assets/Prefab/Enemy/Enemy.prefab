@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 1714390065553246991}
   - component: {fileID: 4503044521522123907}
   - component: {fileID: 2014723953487300160}
-  - component: {fileID: 3322964344668057467}
+  - component: {fileID: 8279851778796657563}
   - component: {fileID: 225134567550301783}
   - component: {fileID: 5540056597647044138}
   - component: {fileID: 7783872724632621578}
@@ -116,8 +116,8 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 0
   m_Constraints: 4
---- !u!58 &3322964344668057467
-CircleCollider2D:
+--- !u!61 &8279851778796657563
+BoxCollider2D:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -148,9 +148,19 @@ CircleCollider2D:
   m_IsTrigger: 0
   m_UsedByEffector: 0
   m_UsedByComposite: 0
-  m_Offset: {x: 0, y: -0.053734183}
+  m_Offset: {x: 0, y: 0}
+  m_SpriteTilingProperty:
+    border: {x: 0, y: 0, z: 0, w: 0}
+    pivot: {x: 0.5, y: 0.5}
+    oldSize: {x: 2.5, y: 3}
+    newSize: {x: 1, y: 1}
+    adaptiveTilingThreshold: 0.5
+    drawMode: 0
+    adaptiveTiling: 0
+  m_AutoTiling: 0
   serializedVersion: 2
-  m_Radius: 1.6821479
+  m_Size: {x: 2.5, y: 3}
+  m_EdgeRadius: 0
 --- !u!114 &225134567550301783
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -166,12 +176,13 @@ MonoBehaviour:
   enemyType: 0
   moveSpeed: 3
   detectionRadius: 8
-  attackRange: 1
-  attackCooldown: 3
+  attackRange: 2.4
+  attackCooldown: 1.5
   damage: 1
   meleeHitboxPrefab: {fileID: 3755717365762094065, guid: a2954cd097c114e2db7337d9111407d7, type: 3}
   bulletPrefab: {fileID: 0}
-  attackOffsetDistance: 1
+  attackOffsetDistance: 1.2
+  dealsContactDamage: 0
   knockbackForce: 6
   knockbackDuration: 0.25
   damageFlashColor: {r: 1, g: 0, b: 0, a: 1}

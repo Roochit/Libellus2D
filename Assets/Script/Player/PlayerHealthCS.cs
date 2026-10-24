@@ -198,16 +198,7 @@ public class PlayerHealthCS : MonoBehaviour
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
-        if (isInvincible) return;
-
-        // 2. ตรวจจับชนตัว Enemy โดยตรง (เช่น เดินชนตัวศัตรู)
-        if (collision.gameObject.GetComponent<EnemyCS>() != null)
-        {
-            Vector2 pushDir = (transform.position - collision.transform.position).normalized;
-            if (pushDir == Vector2.zero) pushDir = Vector2.left;
-
-            TakeDamage(1, pushDir); // โดนชนลด 1 หัวใจ
-        }
+        // การเดินชนตัวศัตรูจะไม่ลดเลือด — เลือดจะลดเฉพาะเมื่อถูกโจมตีด้วยท่าฟัน (Hitbox Tag: "Enemy_Attack") หรือการโจมตีอื่นๆ เท่านั้น
     }
 
     // ==========================================

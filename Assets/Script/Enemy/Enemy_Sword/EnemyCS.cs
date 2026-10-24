@@ -13,12 +13,15 @@ public class EnemyCS : MonoBehaviour
     [SerializeField] private float detectionRadius = 8f; // ระยะที่ศัตรูเริ่มมองเห็นผู้เล่นและวิ่งเข้าหา
 
     [Header("Combat Settings")]
-    [SerializeField] protected float attackRange = 1.5f; // ระยะเข้าโจมตีด้วยดาบ (Melee) หรือ ระยะยิง (Ranged)
+    [SerializeField] protected float attackRange = 2.4f; // ระยะเข้าโจมตีด้วยดาบ (Melee) หรือ ระยะยิง (Ranged)
     [SerializeField] protected float attackCooldown = 1.5f; // คูลดาวน์การโจมตีแต่ละครั้ง
     [SerializeField] protected float damage = 10f; // ดาเมจที่จะทำกับผู้เล่น
     [SerializeField] protected GameObject meleeHitboxPrefab; // prefab ของ Hitbox โจมตีของศัตรู
     [SerializeField] protected GameObject bulletPrefab; // prefab ของกระสุน (สำหรับ Ranged)
-    [SerializeField] protected float attackOffsetDistance = 1.0f; // ระยะยื่นของ Hitbox หรือจุดยิงไปด้านหน้า
+    [SerializeField] protected float attackOffsetDistance = 1.2f; // ระยะยื่นของ Hitbox หรือจุดยิงไปด้านหน้า
+
+    [Header("Contact Damage Settings")]
+    [SerializeField] protected bool dealsContactDamage = false; // ให้ศัตรูทำดาเมจเมื่อเดินชนตัวผู้เล่นโดยตรงหรือไม่ (สำหรับศัตรูถือดาบให้ทำดาเมจผ่านท่าฟันเป็นหลัก)
 
     [Header("Knockback Settings")]
     [SerializeField] protected float knockbackForce = 6f; // แรงผลักตอนโดนตีกระเด็น
@@ -36,6 +39,8 @@ public class EnemyCS : MonoBehaviour
     protected Animator animator;
 
     protected float nextAttackTime = 0f;
+    protected bool isAttacking = false;
+    protected Coroutine attackCoroutine;
     protected bool isKnockedBack = false;
     protected float knockbackTimer = 0f;
     protected Vector2 knockbackDir = Vector2.zero;
@@ -47,6 +52,8 @@ public class EnemyCS : MonoBehaviour
     public System.Action OnDamaged;
 
     public bool IsKnockedBack => isKnockedBack;
+    public bool IsAttacking => isAttacking;
+    public bool DealsContactDamage => dealsContactDamage;
     public Transform PlayerTarget => playerTransform;
 
     protected virtual void Awake()
@@ -93,6 +100,16 @@ public class EnemyCS : MonoBehaviour
         {
             FindPlayer();
             if (playerTransform == null) return;
+        }
+
+        // หากกำลังอยู่ในช่วงแอนิเมชันโจมตี ให้หยุดนิ่งเพื่อไม่ให้เลื่อนไถลขัดจังหวะการฟัน
+        if (isAttacking)
+        {
+            if (rb != null)
+            {
+                rb.velocity = Vector2.zero;
+            }
+            return;
         }
 
         float distanceToPlayer = Vector3.Distance(transform.position, playerTransform.position);
@@ -142,6 +159,11 @@ public class EnemyCS : MonoBehaviour
         if (isKnockedBack)
         {
             rb.velocity = knockbackDir * knockbackForce;
+        }
+        else if (isAttacking)
+        {
+            // ล็อกความเร็วให้อยู่กับที่ระหว่างเล่นแอนิเมชันโจมตี
+            rb.velocity = Vector2.zero;
         }
         else
         {
@@ -198,47 +220,72 @@ public class EnemyCS : MonoBehaviour
         Vector3 attackDir = (playerTransform != null) ? (playerTransform.position - transform.position).normalized : Vector3.right;
         if (attackDir == Vector3.zero) attackDir = Vector3.right;
 
-        // เล่นอนิเมชันโจมตี (ถ้ามีพารามิเตอร์ Attack ใน Animator)
-        if (animator != null)
-        {
-            animator.SetTrigger("Attack");
-        }
-
+        // สั่งให้ Animator เล่นท่าโจมตีผ่าน Event ไปยังสคริปต์ควบคุม Animation
         OnAttackTriggered?.Invoke();
         OnAttackWithDirection?.Invoke(attackDir);
 
         if (enemyType == EnemyType.Melee)
         {
             Debug.Log("Enemy Attacks Player with Sword!");
-
-            // สร้าง Hitbox โจมตีประชิดของศัตรู
-            if (meleeHitboxPrefab != null && playerTransform != null)
-            {
-                Vector3 spawnPosition = transform.position + (attackDir * attackOffsetDistance);
-                float angle = Mathf.Atan2(attackDir.y, attackDir.x) * Mathf.Rad2Deg;
-                Quaternion spawnRotation = Quaternion.Euler(0, 0, angle);
-
-                // สร้าง Hitbox โดยมีศัตรูเป็น Parent (ทำให้จุดหันตามศัตรูได้)
-                GameObject meleeInstance = Instantiate(meleeHitboxPrefab, spawnPosition, spawnRotation, transform);
-                Destroy(meleeInstance, 0.15f); // ทำลายหลังผ่านไป 0.15 วินาที
-            }
+            if (attackCoroutine != null) StopCoroutine(attackCoroutine);
+            attackCoroutine = StartCoroutine(MeleeAttackRoutine(attackDir));
         }
         else if (enemyType == EnemyType.Ranged)
         {
             Debug.Log("Enemy Shoots Player!");
+            if (attackCoroutine != null) StopCoroutine(attackCoroutine);
+            attackCoroutine = StartCoroutine(RangedAttackRoutine(attackDir));
+        }
+    }
 
-            if (bulletPrefab != null && playerTransform != null)
+    protected virtual IEnumerator MeleeAttackRoutine(Vector3 attackDir)
+    {
+        isAttacking = true;
+        if (rb != null) rb.velocity = Vector2.zero;
+
+        // 1. รอจังหวะง้างดาบ (Wind-up) ตามแอนิเมชันก่อนที่ดาบจะฟันลงมา
+        yield return new WaitForSeconds(0.2f);
+
+        // 2. สร้าง Hitbox โจมตีประชิดของศัตรู ณ จังหวะที่ฟัน
+        if (meleeHitboxPrefab != null)
+        {
+            Vector3 spawnPosition = transform.position + (attackDir * attackOffsetDistance);
+            float angle = Mathf.Atan2(attackDir.y, attackDir.x) * Mathf.Rad2Deg;
+            Quaternion spawnRotation = Quaternion.Euler(0, 0, angle);
+
+            // ไม่ผูก parent กับ transform เพื่อป้องกัน scale ติดลบของศัตรูตอนหันซ้ายส่งผลต่อการหมุนของ Collider
+            GameObject meleeInstance = Instantiate(meleeHitboxPrefab, spawnPosition, spawnRotation);
+            Destroy(meleeInstance, 0.25f); // Hitbox มีผลในช่วงการฟัน 0.25 วินาที
+        }
+
+        // 3. รอให้แอนิเมชันท่าฟันเล่นจบครบวงสวิง (อีกประมาณ 0.45 วิ รวมระยะเวลาโจมตีเป็น 0.65 วิ)
+        yield return new WaitForSeconds(0.45f);
+
+        isAttacking = false;
+        attackCoroutine = null;
+    }
+
+    protected virtual IEnumerator RangedAttackRoutine(Vector3 attackDir)
+    {
+        isAttacking = true;
+        if (rb != null) rb.velocity = Vector2.zero;
+
+        yield return new WaitForSeconds(0.15f);
+
+        if (bulletPrefab != null && playerTransform != null)
+        {
+            Vector3 spawnPosition = transform.position + (attackDir * attackOffsetDistance);
+            GameObject bulletInstance = Instantiate(bulletPrefab, spawnPosition, Quaternion.identity);
+            if (bulletInstance.TryGetComponent<EnemyBulletCS>(out var bullet))
             {
-                Vector3 spawnPosition = transform.position + (attackDir * attackOffsetDistance);
-                
-                // สร้างกระสุน
-                GameObject bulletInstance = Instantiate(bulletPrefab, spawnPosition, Quaternion.identity);
-                if (bulletInstance.TryGetComponent<EnemyBulletCS>(out var bullet))
-                {
-                    bullet.Setup(attackDir);
-                }
+                bullet.Setup(attackDir);
             }
         }
+
+        yield return new WaitForSeconds(0.35f);
+
+        isAttacking = false;
+        attackCoroutine = null;
     }
 
     public virtual void TakeDamage(int amount, Vector2 knockbackDirection)
@@ -261,11 +308,25 @@ public class EnemyCS : MonoBehaviour
     protected virtual void Die()
     {
         Debug.Log("Enemy Died!");
+        if (attackCoroutine != null)
+        {
+            StopCoroutine(attackCoroutine);
+            attackCoroutine = null;
+        }
+        isAttacking = false;
         Destroy(gameObject);
     }
 
     public virtual void ApplyKnockback(Vector2 direction)
     {
+        // ยกเลิกการโจมตีที่กำลังทำงานอยู่หากโดนผลักกระเด็น
+        if (attackCoroutine != null)
+        {
+            StopCoroutine(attackCoroutine);
+            attackCoroutine = null;
+        }
+        isAttacking = false;
+
         isKnockedBack = true;
         knockbackTimer = knockbackDuration;
         knockbackDir = direction.normalized;

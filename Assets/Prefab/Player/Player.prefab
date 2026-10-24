@@ -266,4 +266,5 @@ MonoBehaviour:
   walkUpStateName: Player_Walk_Up
   walkSideStateName: Player_side
   flipOnMoveLeft: 1
+  attackAnimationDuration: 0.35
   attackTriggerName: Attack

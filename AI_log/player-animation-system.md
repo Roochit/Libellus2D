@@ -77,7 +77,7 @@
     - **Conditions:** เลือก Trigger ที่ตรงกับท่านั้นๆ เช่น `AttackUp`, `AttackDown`, `AttackSide`, `Dash` (หรือเลือก `state Equals ค่ารหัส`)
     - **Has Exit Time:** ❌ **เอาออก (Uncheck)**
     - **Transition Duration:** **`0`**
-    - **Can Transition to Self:** ❌ **เอาออก (Uncheck)**
+    - **Can Transition to Self:** ✅ **ติ๊กถูก (Check = 1)** เพื่อให้กดฟันรัวๆ ต่อเนื่องกันแล้วแอนิเมชันเริ่มเล่นใหม่ได้ทันทีโดยไม่ตกหล่น (Trigger จะถูก Reset ทันทีที่เข้าสู่ State)
 
 - **เส้นวิ่งกลับ (จาก ท่าฟัน/หลบ ➡️ Player_idel หรือ Exit):**
   - คลิกที่เส้น Transition ขากลับ:

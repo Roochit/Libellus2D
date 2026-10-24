@@ -14,6 +14,10 @@ public class PlayerAnimationCS : MonoBehaviour
     [Tooltip("กลับด้าน SpriteRenderer แนวนอนเมื่อเดินหรือฟันไปทางซ้าย")]
     [SerializeField] private bool flipOnMoveLeft = true;
 
+    [Header("ระยะเวลาแอนิเมชันโจมตี (Attack Animation Settings)")]
+    [Tooltip("ระยะเวลาเล่นแอนิเมชันท่าฟัน (วินาที) ตามความยาวคลิป 0.35s")]
+    [SerializeField] private float attackAnimationDuration = 0.35f;
+
     // References
     private Animator animator = default;
     private SpriteRenderer spriteRenderer = default;
@@ -99,6 +103,13 @@ public class PlayerAnimationCS : MonoBehaviour
 
     private void OnDisable()
     {
+        if (attackRoutine != null)
+        {
+            StopCoroutine(attackRoutine);
+            attackRoutine = null;
+        }
+        isAttacking = false;
+
         if (playerMovement != null)
         {
             playerMovement.OnDashTriggered -= HandleDash;
@@ -265,9 +276,17 @@ public class PlayerAnimationCS : MonoBehaviour
     private void HandleMeleeAttack()
     {
         Vector3 facingDir = playerCombat != null ? playerCombat.LastFacingDirection : Vector3.down;
-        float attackDuration = playerCombat != null ? Mathf.Max(0.15f, playerCombat.MeleeDuration) : 0.2f;
+        float attackDuration = attackAnimationDuration > 0.05f 
+            ? attackAnimationDuration 
+            : (playerCombat != null ? Mathf.Max(0.15f, playerCombat.MeleeDuration) : 0.35f);
 
         int attackStateInt;
+
+        // ล้างทริกเกอร์การฟันเดิมก่อนเพื่อป้องกัน Trigger ค้าง
+        if (hasParamAttackSide) animator.ResetTrigger(attackSideHash);
+        if (hasParamAttackUp) animator.ResetTrigger(attackUpHash);
+        if (hasParamAttackDown) animator.ResetTrigger(attackDownHash);
+        if (hasParamAttackTrigger) animator.ResetTrigger(attackTriggerHash);
 
         // คำนวณทิศทางของการฟัน
         if (Mathf.Abs(facingDir.x) > Mathf.Abs(facingDir.y))
