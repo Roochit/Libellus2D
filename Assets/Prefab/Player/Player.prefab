@@ -79,7 +79,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 2
+  m_SortingOrder: 5
   m_Sprite: {fileID: -2133406621, guid: 9f16ef798dec64af6a17ef4b44dcd859, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -191,9 +191,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a8fd298055c07428a995d49f62541383, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  aimMode: 0
   attackPoint: {fileID: 0}
   attackOffsetDistance: 1.2
   meleeHitboxPrefab: {fileID: 3755717365762094065, guid: c302ccdf7cef341769390f400fd07863, type: 3}
+  meleeHitboxScaleMultiplier: {x: 1, y: 1}
   meleeDuration: 0.15
   meleeCooldown: 0.15
   meleeDamage: 2
@@ -260,11 +262,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b1c23cfb4e06c43818cae7ff07c4a80f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  controlMode: 0
-  idleStateName: Player_idel
-  walkDownStateName: Player_Walk_down
-  walkUpStateName: Player_Walk_Up
-  walkSideStateName: Player_side
   flipOnMoveLeft: 1
   attackAnimationDuration: 0.35
-  attackTriggerName: Attack
