@@ -10605,7 +10605,7 @@ Tilemap:
     second:
       serializedVersion: 2
       m_TileIndex: 8
-      m_TileSpriteIndex: 8
+      m_TileSpriteIndex: 10
       m_TileMatrixIndex: 0
       m_TileColorIndex: 0
       m_TileObjectToInstantiateIndex: 65535
@@ -10615,7 +10615,7 @@ Tilemap:
     second:
       serializedVersion: 2
       m_TileIndex: 7
-      m_TileSpriteIndex: 7
+      m_TileSpriteIndex: 9
       m_TileMatrixIndex: 0
       m_TileColorIndex: 0
       m_TileObjectToInstantiateIndex: 65535
@@ -10625,7 +10625,7 @@ Tilemap:
     second:
       serializedVersion: 2
       m_TileIndex: 6
-      m_TileSpriteIndex: 6
+      m_TileSpriteIndex: 8
       m_TileMatrixIndex: 0
       m_TileColorIndex: 0
       m_TileObjectToInstantiateIndex: 65535
@@ -10635,7 +10635,7 @@ Tilemap:
     second:
       serializedVersion: 2
       m_TileIndex: 5
-      m_TileSpriteIndex: 5
+      m_TileSpriteIndex: 7
       m_TileMatrixIndex: 0
       m_TileColorIndex: 0
       m_TileObjectToInstantiateIndex: 65535
@@ -10645,7 +10645,7 @@ Tilemap:
     second:
       serializedVersion: 2
       m_TileIndex: 4
-      m_TileSpriteIndex: 4
+      m_TileSpriteIndex: 6
       m_TileMatrixIndex: 0
       m_TileColorIndex: 0
       m_TileObjectToInstantiateIndex: 65535
@@ -10655,7 +10655,7 @@ Tilemap:
     second:
       serializedVersion: 2
       m_TileIndex: 3
-      m_TileSpriteIndex: 3
+      m_TileSpriteIndex: 5
       m_TileMatrixIndex: 0
       m_TileColorIndex: 0
       m_TileObjectToInstantiateIndex: 65535
@@ -10758,6 +10758,10 @@ Tilemap:
     m_Data: {fileID: 0}
   - m_RefCount: 0
     m_Data: {fileID: 0}
+  - m_RefCount: 0
+    m_Data: {fileID: 0}
+  - m_RefCount: 0
+    m_Data: {fileID: 0}
   - m_RefCount: 1
     m_Data: {fileID: -2704316765720089555, guid: c3d1e0adfbe2e3a40ba9e7efd2cb7177, type: 3}
   - m_RefCount: 1
@@ -10770,10 +10774,6 @@ Tilemap:
     m_Data: {fileID: 112321889278370246, guid: c3d1e0adfbe2e3a40ba9e7efd2cb7177, type: 3}
   - m_RefCount: 1
     m_Data: {fileID: 4178602792724051354, guid: c3d1e0adfbe2e3a40ba9e7efd2cb7177, type: 3}
-  - m_RefCount: 0
-    m_Data: {fileID: 0}
-  - m_RefCount: 0
-    m_Data: {fileID: 0}
   m_TileMatrixArray:
   - m_RefCount: 6
     m_Data:
@@ -11709,6 +11709,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1529919157}
     m_Modifications:
+    - target: {fileID: 411102955353867461, guid: 82f138f8937d74d2fbb89bd3a23fb462, type: 3}
+      propertyPath: attackRange
+      value: 12
+      objectReference: {fileID: 0}
+    - target: {fileID: 411102955353867461, guid: 82f138f8937d74d2fbb89bd3a23fb462, type: 3}
+      propertyPath: detectionRadius
+      value: 12
+      objectReference: {fileID: 0}
     - target: {fileID: 3390925131852495053, guid: 82f138f8937d74d2fbb89bd3a23fb462, type: 3}
       propertyPath: m_Name
       value: B01RangedEnemy02
@@ -21928,6 +21936,10 @@ PrefabInstance:
       propertyPath: attackPoint
       value: 
       objectReference: {fileID: 1535692992}
+    - target: {fileID: 3678827243551645524, guid: 14c4fd258e5714882961f6ecb9503451, type: 3}
+      propertyPath: meleeCooldown
+      value: 0.3
+      objectReference: {fileID: 0}
     - target: {fileID: 3678827243551645524, guid: 14c4fd258e5714882961f6ecb9503451, type: 3}
       propertyPath: attackOffsetDistance
       value: 1

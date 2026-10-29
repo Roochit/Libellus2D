@@ -5,6 +5,8 @@ public class BulletCS : MonoBehaviour
     [SerializeField] private float speed = 12f;
     [SerializeField] private float lifeTime = 2f; // ทำลายตัวเองหลังผ่านไป 2 วินาที
 
+    [SerializeField]private float rotation = 0.5f;
+
     private Vector3 moveDirection;
 
     public int Damage { get; private set; } = 1;
@@ -24,6 +26,7 @@ public class BulletCS : MonoBehaviour
     private void Update()
     {
         transform.position += moveDirection * speed * Time.deltaTime;
+        transform.Rotate(0,0,rotation);
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
