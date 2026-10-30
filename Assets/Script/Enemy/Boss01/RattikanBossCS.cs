@@ -25,6 +25,22 @@ public class RattikanBossCS : EnemyCS
     [SerializeField] private TextMeshProUGUI dialogueTextUI = default; // UI แสดงข้อความพูดของบอส (ถ้ามี)
     [SerializeField] private float dialogueDuration = 3f;
 
+    [Header("=== Boss Visual & Pose Settings ===")]
+    [Tooltip("Sprite ท่าทางปกติของบอส (Idle Pose) เช่น Boss01-tc_0")]
+    [SerializeField] private Sprite idleSprite = default;
+    [Tooltip("Sprite ท่าทางตอนโจมตีของบอส (Attack Pose) เช่น Boss01-tc_1")]
+    [SerializeField] private Sprite attackSprite = default;
+
+    [Header("=== Optional Attack Poses (ปล่อยว่างไว้หากต้องการใช้ Attack Pose หลัก) ===")]
+    [Tooltip("ท่าตอนยิงดินสอ 8 ทิศ (ถ้าเว้นว่างจะใช้ attackSprite)")]
+    [SerializeField] private Sprite pencilAttackSprite = default;
+    [Tooltip("ท่าตอนเสกกระดานวาดรูป (ถ้าเว้นว่างจะใช้ attackSprite)")]
+    [SerializeField] private Sprite boardAttackSprite = default;
+    [Tooltip("ท่าตอนเสกมีดคัดเตอร์แทงพื้น (ถ้าเว้นว่างจะใช้ attackSprite)")]
+    [SerializeField] private Sprite cutterAttackSprite = default;
+    [Tooltip("ท่าตอนยิงลำแสงไม้บรรทัด (ถ้าเว้นว่างจะใช้ attackSprite)")]
+    [SerializeField] private Sprite beamAttackSprite = default;
+
     [Header("=== Boss Health & Armor ===")]
     [SerializeField] private int bossMaxHearts = 25; // หลอดเลือดบอสเริ่มต้น (เช่น 25 หัวใจ)
     [SerializeField] private bool hasSuperArmor = true; // บอสไม่กระเด็นถอยหลังจากดาเมจธรรมดา
@@ -89,6 +105,14 @@ public class RattikanBossCS : EnemyCS
         maxHearts = bossMaxHearts;
         currentHearts = bossMaxHearts;
 
+        EnsureSpriteRenderer();
+
+        // หากยังไม่ได้กำหนด idleSprite ให้ดึงจาก SpriteRenderer เริ่มต้น
+        if (idleSprite == null && spriteRenderer != null && spriteRenderer.sprite != null)
+        {
+            idleSprite = spriteRenderer.sprite;
+        }
+
         // หากไม่มีจุดปาก หรือจุดปากไม่ได้ผูกอยู่ใต้บอส ให้สร้าง MouthPoint ใต้บอสอัตโนมัติ
         if (mouthPoint == null || !mouthPoint.IsChildOf(transform))
         {
@@ -114,6 +138,22 @@ public class RattikanBossCS : EnemyCS
         currentHearts = bossMaxHearts;
         UpdateBossHealthUI();
 
+        EnsureSpriteRenderer();
+
+#if UNITY_EDITOR
+        if (idleSprite == null || attackSprite == null)
+        {
+            TryAutoAssignEditorSprites();
+        }
+#endif
+
+        if (idleSprite == null && spriteRenderer != null && spriteRenderer.sprite != null)
+        {
+            idleSprite = spriteRenderer.sprite;
+        }
+
+        SetIdlePose();
+
         if (!waitForTrigger)
         {
             ActivateBossBattle();
@@ -133,6 +173,7 @@ public class RattikanBossCS : EnemyCS
     private IEnumerator BossIntroRoutine()
     {
         currentState = BossState.Intro;
+        SetIdlePose();
         ShowDialogue(introQuote);
 
         yield return new WaitForSeconds(dialogueDuration);
@@ -140,6 +181,92 @@ public class RattikanBossCS : EnemyCS
         currentState = BossState.Idle;
         nextAttackTime = Time.time + 1.0f; // เริ่มต้นการโจมตีแรกหลังคุยจบ 1 วิ
     }
+
+    /// <summary>
+    /// ตรวจสอบและดึง SpriteRenderer ให้พร้อมใช้งานเสมอ
+    /// </summary>
+    private void EnsureSpriteRenderer()
+    {
+        if (spriteRenderer == null)
+        {
+            spriteRenderer = GetComponent<SpriteRenderer>();
+            if (spriteRenderer == null)
+            {
+                spriteRenderer = GetComponentInChildren<SpriteRenderer>();
+            }
+        }
+    }
+
+    /// <summary>
+    /// ปรับท่าทาง (Pose) ของบอสเป็นท่าโจมตี
+    /// </summary>
+    /// <param name="customAttackSprite">Sprite ท่าโจมตีเฉพาะท่า (ถ้าไม่มีจะใช้ attackSprite หลัก)</param>
+    public void SetAttackPose(Sprite customAttackSprite = null)
+    {
+        if (currentState == BossState.Dead) return;
+        EnsureSpriteRenderer();
+
+        if (spriteRenderer != null)
+        {
+            Sprite targetSprite = customAttackSprite != null ? customAttackSprite : attackSprite;
+            if (targetSprite != null)
+            {
+                spriteRenderer.sprite = targetSprite;
+            }
+        }
+    }
+
+    /// <summary>
+    /// ปรับท่าทาง (Pose) ของบอสกลับสู่ท่าปกติ (Idle)
+    /// </summary>
+    public void SetIdlePose()
+    {
+        EnsureSpriteRenderer();
+
+        if (spriteRenderer != null && idleSprite != null)
+        {
+            spriteRenderer.sprite = idleSprite;
+        }
+    }
+
+#if UNITY_EDITOR
+    /// <summary>
+    /// ช่วยผูกสไปรต์ Boss01-tc_0 (Idle) และ Boss01-tc_1 (Attack) ให้อัตโนมัติเมื่ออยู่ใน Unity Editor
+    /// </summary>
+    private void TryAutoAssignEditorSprites()
+    {
+        if (idleSprite != null && attackSprite != null) return;
+
+        string[] guids = UnityEditor.AssetDatabase.FindAssets("Boss01-tc");
+        foreach (var guid in guids)
+        {
+            string path = UnityEditor.AssetDatabase.GUIDToAssetPath(guid);
+            if (path.EndsWith(".PNG", System.StringComparison.OrdinalIgnoreCase) || path.EndsWith(".png", System.StringComparison.OrdinalIgnoreCase))
+            {
+                var allSprites = UnityEditor.AssetDatabase.LoadAllAssetsAtPath(path);
+                foreach (var obj in allSprites)
+                {
+                    if (obj is Sprite s)
+                    {
+                        if (s.name == "Boss01-tc_0" && idleSprite == null) idleSprite = s;
+                        else if (s.name == "Boss01-tc_1" && attackSprite == null) attackSprite = s;
+                    }
+                }
+            }
+        }
+    }
+
+    protected virtual void OnValidate()
+    {
+        EnsureSpriteRenderer();
+        TryAutoAssignEditorSprites();
+
+        if (spriteRenderer != null && idleSprite != null && (spriteRenderer.sprite == null || spriteRenderer.sprite.name == "Square"))
+        {
+            spriteRenderer.sprite = idleSprite;
+        }
+    }
+#endif
 
     protected override void Update()
     {
@@ -267,6 +394,7 @@ public class RattikanBossCS : EnemyCS
     {
         Debug.Log("[Rattikan Boss] ใช้ท่าที่ 1: ยิงดินสอ EE พิฆาต 8 ทิศ!");
 
+        SetAttackPose(pencilAttackSprite);
         if (animator != null) animator.SetTrigger("Attack");
 
         int waves = (currentPhase == BossPhase.Phase1) ? pencilWavesPhase1 : pencilWavesPhase2;
@@ -288,6 +416,7 @@ public class RattikanBossCS : EnemyCS
             yield return new WaitForSeconds(0.4f);
         }
 
+        yield return new WaitForSeconds(0.3f);
         EndAttackAction();
     }
 
@@ -334,6 +463,7 @@ public class RattikanBossCS : EnemyCS
     {
         Debug.Log("[Rattikan Boss] ใช้ท่าที่ 2: เรียกกระดานวาดรูปมาวิ่งวนรอบตัวเอง!");
 
+        SetAttackPose(boardAttackSprite);
         if (animator != null) animator.SetTrigger("Attack");
 
         int boardCount = (currentPhase == BossPhase.Phase1) ? boardCountPhase1 : boardCountPhase2;
@@ -368,6 +498,7 @@ public class RattikanBossCS : EnemyCS
     {
         Debug.Log("[Rattikan Boss] ใช้ท่าที่ 3: มีดคัดเตอร์สุ่มแทงออกมาจากพื้น!");
 
+        SetAttackPose(cutterAttackSprite);
         if (animator != null) animator.SetTrigger("Attack");
 
         int cutterCount = (currentPhase == BossPhase.Phase1) ? cutterCountPhase1 : cutterCountPhase2;
@@ -404,6 +535,8 @@ public class RattikanBossCS : EnemyCS
     {
         Debug.Log("[Rattikan Boss] ใช้ท่าที่ 4: เสกลำแสงไม้บรรทัดยิงทะลุจอมาจากข้างจอ!");
 
+        SetAttackPose(beamAttackSprite);
+
         // 1. สั่งซูมกล้องออกเพื่อให้เห็นมุมมองกว้างทั่วจอ
         ZoomCameraOut();
         yield return new WaitForSeconds(beamCameraZoomTime); // รอให้กล้องเริ่มซูมออก
@@ -419,58 +552,58 @@ public class RattikanBossCS : EnemyCS
             float halfWidth = cam != null ? (cam.orthographicSize * cam.aspect) : 36f;
             if (halfWidth < 25f) halfWidth = 36f; // รับประกันระยะครอบคลุมเมื่อกล้องซูมออก
 
-            // 2. กำหนดทิศทางของลำแสงจากข้างจอ:
-            // หากยิงหลายนัดใน Phase 2 ให้สลับฝั่ง (นัดแรกจากขวา นัดสองจากซ้าย)
-            float dirX = (shot % 2 == 0) ? -1f : 1f;
-            if (playerTransform != null && shotCount == 1)
+            // 2. กำหนดตำแหน่งเกิดของลำแสง 10 ไม้บรรทัด ให้เยื้องไปทางซ้ายนอกจอ
+            // เพื่อให้ตลอดการเลื่อนจากซ้ายไปขวา (รวมระยะเลื่อน ~77 หน่วย) ปลายลำแสงทั้งสองฝั่งจะอยู่นอกจอเสมอ
+            float totalSlideDistance = 77f;
+            var prefabBeam = rulerBeamPrefab != null ? rulerBeamPrefab.GetComponentInChildren<RattikanRulerBeamCS>() : null;
+            if (prefabBeam != null)
             {
-                dirX = (playerTransform.position.x < camX) ? -1f : 1f;
+                totalSlideDistance = prefabBeam.TotalSlideDistance;
             }
-            Vector3 horizontalDir = new Vector3(dirX, 0f, 0f);
+            float leftEdgeBuffer = 20f;
+            float spawnX = camX - halfWidth - totalSlideDistance - leftEdgeBuffer;
 
             // 3. สุ่มระดับความสูงแนวนอน (Random Y Height) รอบตำแหน่งของผู้เล่น
             float randomYOffset = Random.Range(-horizontalYSpread, horizontalYSpread);
             float targetY = (playerTransform != null ? playerTransform.position.y : transform.position.y) + randomYOffset;
 
-            // บอสไม่เลื่อนตัวมาตรงกับระดับปากที่จะยิงแล้ว (ร่ายสั่งการจากตำแหน่งเดิม)
+            // หันหน้าบอสตามผู้เล่น
             if (playerTransform != null)
             {
                 HandleFlip((playerTransform.position.x < transform.position.x) ? -1f : 1f);
             }
 
+            SetAttackPose(beamAttackSprite);
             if (animator != null) animator.SetTrigger("Attack");
 
-            // 4. เสกลำแสงไม้บรรทัดแนวนอนพุ่งทะลุจอมาจากข้างจอ (ไม่ยิงจากปากบอส)
-            // หากยิงไปทางซ้าย (dirX = -1) ลำแสงเริ่มจากขอบขวาของจอพุ่งทะลุข้ามจอไปซ้าย
-            // หากยิงไปทางขวา (dirX = 1) ลำแสงเริ่มจากขอบซ้ายของจอพุ่งทะลุข้ามจอไปขวา
-            float sideScreenX = (dirX < 0f) ? (camX + halfWidth + 5f) : (camX - halfWidth - 5f);
-            Vector3 spawnPos = new Vector3(sideScreenX, targetY, 0f);
+            // 4. เสกลำแสงไม้บรรทัด 10 อันต่อกันพาดผ่านจอแบบเต็มจอเสมอ (คงสัดส่วนเดิม 1:1)
+            Vector3 spawnPos = new Vector3(spawnX, targetY, 0f);
 
             if (rulerBeamPrefab != null)
             {
-                // เสกลำแสงที่ข้างจอในระดับความสูง targetY
+                // เสกลำแสงที่ขอบจอซ้ายในระดับความสูง targetY
                 GameObject beamObj = Instantiate(rulerBeamPrefab, spawnPos, Quaternion.identity);
                 beamObj.tag = "Enemy_Attack";
-                Destroy(beamObj, beamDuration + 1.5f); // รับประกันการทำลายตัวเองแน่นอน
+                Destroy(beamObj, beamDuration + 3.0f); // รับประกันการทำลายตัวเองแน่นอน
 
-                // ตั้งค่า RattikanRulerBeamCS ทั้งที่ root หรือ child ให้ทำงานและชี้ทิศทางเดียวกันทั้งหมด
+                // ตั้งค่า RattikanRulerBeamCS ทั้งที่ root หรือ child ให้ทำงานและเลื่อนจากซ้ายไปขวา
                 var allBeams = beamObj.GetComponentsInChildren<RattikanRulerBeamCS>(true);
                 if (allBeams != null && allBeams.Length > 0)
                 {
                     foreach (var beam in allBeams)
                     {
-                        beam.Setup(horizontalDir, beamLength, beamDuration);
+                        beam.Setup(Vector3.right, -1f, beamDuration);
                     }
                 }
                 else
                 {
                     var beamScript = beamObj.AddComponent<RattikanRulerBeamCS>();
-                    beamScript.Setup(horizontalDir, beamLength, beamDuration);
+                    beamScript.Setup(Vector3.right, -1f, beamDuration);
                 }
             }
 
-            // ค้างท่าระหว่างยิงลำแสง
-            yield return new WaitForSeconds(beamDuration + 0.5f);
+            // คอยจนกว่าลำแสงจะทำงานเสร็จสิ้น (รวมชาร์จเตือน 0.8s + ยิงเลื่อน 1.4s + buffer)
+            yield return new WaitForSeconds(beamDuration + 1.2f);
         }
 
         // 5. คืนค่ามุมกล้องกลับสู่ระยะปกติเมื่อยิงเสร็จ
@@ -530,6 +663,7 @@ public class RattikanBossCS : EnemyCS
     private void EndAttackAction()
     {
         currentState = BossState.Idle;
+        SetIdlePose();
         float interval = (currentPhase == BossPhase.Phase1) ? attackIntervalPhase1 : attackIntervalPhase2;
         nextAttackTime = Time.time + interval;
     }
@@ -583,6 +717,7 @@ public class RattikanBossCS : EnemyCS
     protected override void Die()
     {
         currentState = BossState.Dead;
+        SetIdlePose();
         Debug.Log("[Rattikan Boss] พ่ายแพ้แล้ว!");
 
         if (activeAttackRoutine != null)
