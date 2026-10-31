@@ -190,6 +190,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   nextSceneName: LV02
+  useLoadingScene: 1
+  loadingSceneName: LoadingScene
+  playerTag: Player
+  markCurrentStageCleared: 1
 --- !u!61 &84724046
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -22059,7 +22063,7 @@ Transform:
   m_GameObject: {fileID: 270277373}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 24.5, y: 45.62, z: 0.70907485}
+  m_LocalPosition: {x: 22.92, y: 49.38, z: 0.70907485}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

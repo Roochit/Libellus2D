@@ -15,6 +15,9 @@ EditorBuildSettings:
     path: Assets/Scenes/LV00.unity
     guid: 2246f1575f05c4982b84043e5362450a
   - enabled: 1
+    path: Assets/Scenes/LoadingScene.unity
+    guid: f27990f9d4c144edba1e9a09feb26c0d
+  - enabled: 1
     path: Assets/Scenes/LV01.unity
     guid: 9cef37c311503436e9b0f4bd8c587852
   - enabled: 1

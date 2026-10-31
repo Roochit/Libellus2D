@@ -38,14 +38,22 @@ public class PlayerHealthCS : MonoBehaviour
 
     private void Start()
     {
-        // หากเริ่มต้นเล่นด่านแรกสุด (LV01) ให้ล้างไฟล์เซฟเพื่อเริ่มใหม่ที่ 3 หัวใจเสมอ
         string currentSceneName = SceneManager.GetActiveScene().name;
-        if (currentSceneName.Equals("LV01", System.StringComparison.OrdinalIgnoreCase))
+
+        // กฎ: Player_health.json จะเริ่มต้นและตายเริ่มใหม่ที่ 3 หัวใจแค่ด่าน Lv00 และ Lv01 เท่านั้น
+        if (IsResetToThreeHeartsScene(currentSceneName))
         {
-            DeleteSaveFile();
+            maxHearts = Mathf.Min(defaultMaxHearts, ABSOLUTE_MAX_HEARTS); // เริ่มต้นที่ 3 หัวใจ
+            currentHearts = maxHearts; // เลือดเริ่มต้น 3
+            SaveHealth();
+            Debug.Log($"[PlayerHealth] เริ่มต้นด่าน {currentSceneName}: รีเซ็ตเลือดเป็น {currentHearts}/{maxHearts} หัวใจ");
+        }
+        else
+        {
+            // ด่านอื่นๆ (เช่น LV02, BossLV01): โหลดข้อมูลเลือดและจำนวนหัวใจสูงสุดเดิมจาก DB (JSON)
+            LoadHealth();
         }
 
-        LoadHealth(); // โหลดเลือดจากไฟล์เซฟ JSON
         UpdateHeartUI(); // อัปเดตแสดงผลรูปหัวใจเริ่มต้น
         if (spriteRenderer != null)
         {
@@ -138,13 +146,15 @@ public class PlayerHealthCS : MonoBehaviour
         isInvincible = false;
     }
 
-
-
     private void Die()
     {
         Debug.Log("Player Died!");
-        
-        DeleteSaveFile(); // ลบเซฟไฟล์เมื่อผู้เล่นตายเพื่อให้เกิดมามี 3 หัวใจใหม่
+
+        string currentSceneName = SceneManager.GetActiveScene().name;
+        // จัดการเลือดสำหรับเตรียมเกิดใหม่:
+        // ด่าน LV00 และ LV01 จะรีเซ็ตเป็น 3 หัวใจ
+        // ด่านอื่นๆ จะรักษา maxHearts เดิมไว้ และฟื้นฟูเลือดเต็ม
+        ResetHealthForDeathRestart(currentSceneName);
 
         // ปิดการควบคุมตัวละคร (การเดินและการฟัน/ยิง)
         if (TryGetComponent<PlayerMovementCS>(out var movement)) movement.enabled = false;
@@ -206,13 +216,26 @@ public class PlayerHealthCS : MonoBehaviour
     // ==========================================
 
     [System.Serializable]
-    private class SaveData
+    public class SaveData
     {
         public int currentHearts;
         public int maxHearts;
     }
 
-    private string GetSavePath()
+    /// <summary>
+    /// ตรวจสอบว่าเป็นด่านที่ต้องเริ่มต้นและตายเกิดใหม่ที่ 3 หัวใจหรือไม่ (LV00, LV01 เท่านั้น)
+    /// </summary>
+    public static bool IsResetToThreeHeartsScene(string sceneName)
+    {
+        if (string.IsNullOrEmpty(sceneName)) return false;
+        return sceneName.Equals("LV00", System.StringComparison.OrdinalIgnoreCase) ||
+               sceneName.Equals("LV01", System.StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// คืนค่า Path ของ db/player_health.json
+    /// </summary>
+    public static string GetSaveFilePath()
     {
         string directoryPath = Path.Combine(Application.dataPath, "../db");
         if (!Directory.Exists(directoryPath))
@@ -222,22 +245,86 @@ public class PlayerHealthCS : MonoBehaviour
         return Path.Combine(directoryPath, "player_health.json");
     }
 
-    private void SaveHealth()
+    private string GetSavePath()
+    {
+        return GetSaveFilePath();
+    }
+
+    /// <summary>
+    /// บันทึกข้อมูลเลือดลงไฟล์ JSON โดยตรง
+    /// </summary>
+    public static void SaveDataToFile(SaveData data)
     {
         try
         {
-            SaveData data = new SaveData();
-            data.currentHearts = currentHearts;
-            data.maxHearts = maxHearts;
-
             string json = JsonUtility.ToJson(data, true);
-            File.WriteAllText(GetSavePath(), json);
-            Debug.Log($"Health Saved to: {GetSavePath()} ({currentHearts}/{maxHearts})");
+            File.WriteAllText(GetSaveFilePath(), json);
         }
         catch (System.Exception e)
         {
-            Debug.LogError($"Failed to save health: {e.Message}");
+            Debug.LogError($"[PlayerHealth] Failed to save health data to file: {e.Message}");
         }
+    }
+
+    /// <summary>
+    /// รีเซ็ตเลือดเมื่อตายและเริ่มด่านใหม่:
+    /// - ด่าน LV00 และ LV01: รีเซ็ตเป็น 3 หัวใจเต็มเสมอ
+    /// - ด่านอื่นๆ (LV02 ฯลฯ): รักษาระดับ maxHearts เดิมที่สะสมมาไว้ และคืนเลือดเต็มตาม maxHearts นั้น
+    /// </summary>
+    public static void ResetHealthForDeathRestart(string sceneName)
+    {
+        string path = GetSaveFilePath();
+
+        if (IsResetToThreeHeartsScene(sceneName))
+        {
+            SaveData data = new SaveData
+            {
+                currentHearts = 3,
+                maxHearts = 3
+            };
+            SaveDataToFile(data);
+            Debug.Log($"[PlayerHealth] รีเซ็ตเลือดเริ่มใหม่เมื่อตายในด่าน {sceneName}: 3/3 หัวใจ");
+        }
+        else
+        {
+            // ด่านอื่นๆ: ค้นหาจำนวน maxHearts เดิมที่บันทึกไว้
+            int maxH = 3;
+            if (File.Exists(path))
+            {
+                try
+                {
+                    string json = File.ReadAllText(path);
+                    SaveData loaded = JsonUtility.FromJson<SaveData>(json);
+                    if (loaded != null && loaded.maxHearts > 0)
+                    {
+                        maxH = Mathf.Min(loaded.maxHearts, ABSOLUTE_MAX_HEARTS);
+                    }
+                }
+                catch (System.Exception e)
+                {
+                    Debug.LogWarning($"[PlayerHealth] อ่านไฟล์เซฟไม่สำเร็จ: {e.Message}");
+                }
+            }
+
+            SaveData data = new SaveData
+            {
+                currentHearts = maxH,
+                maxHearts = maxH
+            };
+            SaveDataToFile(data);
+            Debug.Log($"[PlayerHealth] คืนเลือดเต็มเมื่อตายในด่าน {sceneName}: {maxH}/{maxH} หัวใจ (รักษา maxHearts เดิม)");
+        }
+    }
+
+    private void SaveHealth()
+    {
+        SaveData data = new SaveData
+        {
+            currentHearts = currentHearts,
+            maxHearts = maxHearts
+        };
+        SaveDataToFile(data);
+        Debug.Log($"Health Saved to: {GetSavePath()} ({currentHearts}/{maxHearts})");
     }
 
     private void LoadHealth()
@@ -251,7 +338,8 @@ public class PlayerHealthCS : MonoBehaviour
                 SaveData data = JsonUtility.FromJson<SaveData>(json);
 
                 maxHearts = Mathf.Min(data.maxHearts, ABSOLUTE_MAX_HEARTS);
-                currentHearts = Mathf.Clamp(data.currentHearts, 0, maxHearts);
+                // หากเลือดที่บันทึกไว้เป็น 0 (เพิ่งตายแล้วเริ่มใหม่) ให้คืนเลือดเต็ม maxHearts
+                currentHearts = (data.currentHearts <= 0) ? maxHearts : Mathf.Clamp(data.currentHearts, 1, maxHearts);
 
                 Debug.Log($"Health Loaded: {currentHearts}/{maxHearts}");
                 return;
@@ -262,13 +350,13 @@ public class PlayerHealthCS : MonoBehaviour
             }
         }
 
-        // กรณีไม่มีไฟล์เซฟ (เริ่มด่านแรกครั้งแรกสุด)
+        // กรณีไม่มีไฟล์เซฟ (Fallback)
         maxHearts = Mathf.Min(defaultMaxHearts, ABSOLUTE_MAX_HEARTS); // เริ่มต้นที่ 3 หัวใจสูงสุด
         currentHearts = maxHearts; // เลือดปัจจุบันเริ่มต้นที่ 3
         SaveHealth(); // สร้างไฟล์เซฟเริ่มต้นทันที
     }
 
-    private void DeleteSaveFile()
+    public void DeleteSaveFile()
     {
         string path = GetSavePath();
         if (File.Exists(path))
@@ -276,7 +364,7 @@ public class PlayerHealthCS : MonoBehaviour
             try
             {
                 File.Delete(path);
-                Debug.Log("Save file deleted due to player death.");
+                Debug.Log("Save file deleted.");
             }
             catch (System.Exception e)
             {

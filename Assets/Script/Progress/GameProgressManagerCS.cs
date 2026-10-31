@@ -11,7 +11,8 @@ using UnityEngine.SceneManagement;
 [System.Serializable]
 public class GameProgressData
 {
-    public string currentScene = "LV01";               // ฉากล่าสุดที่ผู้เล่นอยู่
+    public string currentScene = "LV01";               // ฉาก/ด่านที่เราอยู่ปัจจุบัน
+    public string targetScene = "LV01";                // ฉาก/ด่านปลายทางที่เราจะส่งไป (สำหรับหน้า Loading)
     public string highestUnlockedScene = "LV01";        // ด่านสูงสุดที่ปลดล็อกแล้ว
     public List<string> clearedStages = new List<string>(); // รายชื่อด่านที่เคลียร์แล้ว
     public List<string> defeatedBosses = new List<string>();// รายชื่อบอสที่ปราบได้แล้ว
@@ -21,8 +22,8 @@ public class GameProgressData
 /// <summary>
 /// จัดการฐานข้อมูลความคืบหน้าของเกม (Game Progress DB System)
 /// - บันทึกและโหลดข้อมูลจาก db/game_progress.json
+/// - จดบันทึกด่านปัจจุบัน (currentScene) และด่านปลายทางที่จะส่งไป (targetScene) สำหรับหน้า Loading หลอกๆ
 /// - สามารถเรียกใช้ผ่าน static functions ได้จากทุกที่ในโปรเจกต์
-/// - มีตัวเลือก auto-save เมื่อเข้าสู่ด่านเล่นจริง
 /// </summary>
 public class GameProgressManagerCS : MonoBehaviour
 {
@@ -30,7 +31,7 @@ public class GameProgressManagerCS : MonoBehaviour
     public static GameProgressManagerCS Instance => instance;
 
     [Header("Settings")]
-    [Tooltip("บันทึกด่านปัจจุบันลง DB อัตโนมัติเมื่อเข้าฉาก (ถ้าไม่ใช่หน้า Lobby)")]
+    [Tooltip("บันทึกด่านปัจจุบันลง DB อัตโนมัติเมื่อเข้าฉาก (ถ้าไม่ใช่หน้า Lobby หรือหน้า Loading)")]
     [SerializeField] private bool autoSaveActiveScene = true;
 
     private static string saveFilePath;
@@ -72,9 +73,11 @@ public class GameProgressManagerCS : MonoBehaviour
     private void AutoSaveCurrentScene()
     {
         string activeScene = SceneManager.GetActiveScene().name;
-        // ไม่บันทึกถ้าเป็นหน้า Lobby หรือฉากทดสอบทั่วไป
+        // ไม่บันทึกถ้าเป็นหน้า Lobby, หน้า Loading หรือฉากทดสอบทั่วไป
         if (!activeScene.Equals("Lobby", StringComparison.OrdinalIgnoreCase) &&
-            !activeScene.Equals("SampleScene", StringComparison.OrdinalIgnoreCase))
+            !activeScene.Equals("SampleScene", StringComparison.OrdinalIgnoreCase) &&
+            !activeScene.Equals("LoadingScene", StringComparison.OrdinalIgnoreCase) &&
+            activeScene.IndexOf("Loading", StringComparison.OrdinalIgnoreCase) < 0)
         {
             SaveCurrentScene(activeScene);
         }
@@ -88,10 +91,69 @@ public class GameProgressManagerCS : MonoBehaviour
         InitPath();
         GameProgressData data = LoadProgress();
         data.currentScene = sceneName;
+        // หาก targetScene ยังว่างอยู่ ให้ตั้งเป็นฉากเดียวกัน
+        if (string.IsNullOrEmpty(data.targetScene))
+        {
+            data.targetScene = sceneName;
+        }
         data.lastSaveTimestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
 
         SaveProgress(data);
         Debug.Log($"[GameProgressManager] บันทึกฉากปัจจุบันลง DB: {sceneName}");
+    }
+
+    /// <summary>
+    /// บันทึกการส่งฉาก (ด่านที่เราอยู่ และด่านที่เราจะส่งไป) ลงใน DB
+    /// เรียกใช้ก่อนเปลี่ยนไปยังหน้าโหลดดิ้งหลอกๆ เพื่อให้หน้าโหลดดิ้งนำค่าไปแสดงผล
+    /// </summary>
+    public static void SaveSceneTransition(string fromScene, string toScene)
+    {
+        InitPath();
+        GameProgressData data = LoadProgress();
+        data.currentScene = fromScene;
+        data.targetScene = toScene;
+        data.lastSaveTimestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+
+        SaveProgress(data);
+        Debug.Log($"[GameProgressManager] บันทึกการส่งฉากลง DB: ด่านปัจจุบัน={fromScene} -> ด่านเป้าหมาย={toScene}");
+    }
+
+    /// <summary>
+    /// บันทึกเฉพาะด่านปลายทางที่จะส่งไป
+    /// </summary>
+    public static void SaveTargetScene(string toScene)
+    {
+        InitPath();
+        GameProgressData data = LoadProgress();
+        data.targetScene = toScene;
+        data.lastSaveTimestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+
+        SaveProgress(data);
+        Debug.Log($"[GameProgressManager] บันทึกด่านเป้าหมายลง DB: {toScene}");
+    }
+
+    /// <summary>
+    /// ดึงชื่อด่านปลายทางที่จะส่งไปจาก DB (สำหรับหน้า Loading)
+    /// </summary>
+    public static string GetTargetSceneName(string fallback = "LV01")
+    {
+        InitPath();
+        if (!HasProgressData()) return fallback;
+
+        GameProgressData data = LoadProgress();
+        return string.IsNullOrEmpty(data.targetScene) ? fallback : data.targetScene;
+    }
+
+    /// <summary>
+    /// ดึงชื่อด่านปัจจุบันจาก DB
+    /// </summary>
+    public static string GetCurrentSceneName(string fallback = "LV01")
+    {
+        InitPath();
+        if (!HasProgressData()) return fallback;
+
+        GameProgressData data = LoadProgress();
+        return string.IsNullOrEmpty(data.currentScene) ? fallback : data.currentScene;
     }
 
     /// <summary>

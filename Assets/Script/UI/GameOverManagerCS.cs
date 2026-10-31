@@ -134,22 +134,14 @@ public class GameOverManagerCS : MonoBehaviour
         Time.timeScale = 1f;
         isGameOver = false;
 
-        // ลบไฟล์เซฟเพื่อให้ผู้เล่นเกิดใหม่ด้วยหัวใจเต็ม 3 ดวง
-        string savePath = System.IO.Path.Combine(Application.dataPath, "..", "db", "player_health.json");
-        if (System.IO.File.Exists(savePath))
-        {
-            try
-            {
-                System.IO.File.Delete(savePath);
-            }
-            catch (System.Exception e)
-            {
-                Debug.LogWarning("[GameOverManager] ไม่สามารถลบไฟล์เซฟได้: " + e.Message);
-            }
-        }
+        string currentScene = SceneManager.GetActiveScene().name;
+
+        // ปรับปรุง player_health.json ตามกฎ:
+        // เฉพาะด่าน LV00 และ LV01 เท่านั้นที่จะเริ่มใหม่ที่ 3 หัวใจ
+        // ด่านอื่นๆ จะรักษา maxHearts เดิมไว้ และฟื้นฟูเลือดเต็ม
+        PlayerHealthCS.ResetHealthForDeathRestart(currentScene);
 
         // โหลดฉากปัจจุบันใหม่
-        string currentScene = SceneManager.GetActiveScene().name;
         SceneManager.LoadScene(currentScene);
     }
 
@@ -164,16 +156,9 @@ public class GameOverManagerCS : MonoBehaviour
         Time.timeScale = 1f;
         isGameOver = false;
 
-        // ลบไฟล์เซฟเพื่อให้เริ่มใหม่ที่ 3 หัวใจเมื่อเข้าเล่นใหม่
-        string savePath = System.IO.Path.Combine(Application.dataPath, "..", "db", "player_health.json");
-        if (System.IO.File.Exists(savePath))
-        {
-            try
-            {
-                System.IO.File.Delete(savePath);
-            }
-            catch { }
-        }
+        string currentScene = SceneManager.GetActiveScene().name;
+        // ปรับปรุงเลือดเตรียมพร้อมไว้ตามกฎ
+        PlayerHealthCS.ResetHealthForDeathRestart(currentScene);
 
         if (Application.CanStreamedLevelBeLoaded(lobbySceneName))
         {
