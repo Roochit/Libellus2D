@@ -95,6 +95,7 @@ sequenceDiagram
 > [DB_SYSCALL] Validating profile in 'db/player_health.json' ... [OK]
 > [MEMORY] Allocating scene buffer blocks & physics matrix...
 > [STREAM_LOAD] Transferring asset packages & shaders to GPU...
+> [TACTICAL_INTEL] คลิกซ้าย [Left Click] หรือกด [J] เพื่อฟันโจมตีประชิดตามทิศทางเมาส์!
 
 > [TRANSFER] [====================>] 100%
 > [STREAM_LOAD] Scene assets decompressed & compiled. [COMPLETE]
@@ -105,12 +106,14 @@ sequenceDiagram
 
 ### คุณสมบัติเด่นของ `LoadingSceneCS`:
 1. **ระบบสร้าง UI อัตโนมัติ (`autoBuildTerminalUI`):**  
-   หากในฉาก `LoadingScene.unity` ยังไม่มี UI Component ใดๆ สคริปต์จะสร้าง Canvas พื้นหลังสีดำสไตล์ CRT Console พร้อมแถบ Header และ TextMeshPro สีเขียว Retro Terminal ให้อัตโนมัติทันที
-2. **ASCII Loading Bar:**  
+   หากในฉาก `LoadingScene.unity` ยังไม่มี UI Component ใดๆ สคริปต์จะสร้าง Canvas พื้นหลังสีดำสไตล์ CRT Console พร้อมแถบ Header, หน้าต่างข้อความสีเขียว Matrix และกล่องทิปคำแนะนำด้านล่าง (Footer Tip Box) ให้อัตโนมัติทันที
+2. **ระบบสุ่มทิปคำแนะนำ (Game Tips System):**  
+   มีรายการทิปแนะนำการเล่นเกม Libellus2D บรรจุไว้กว่า 14 ข้อ (การฟัน, ยิงไกล, แดช, หัวใจสูงสุด, หลบสกิลบอสรัตติกาล ฯลฯ) โดยระบบจะสุ่มแสดงทั้งในสายพิมพ์ Command Line (`[TACTICAL_INTEL]`) และบนกล่องข้อความทิปด้านล่าง
+3. **ASCII Loading Bar:**  
    แถบความคืบหน้าตัวอักษรแบบไดนามิก เช่น `[=========>           ] 45%` วิ่งสอดคล้องกับเวลาโหลดจริงและ `fakeLoadingDuration`
-3. **Blinking Cursor:**  
+4. **Blinking Cursor:**  
    เคอร์เซอร์กระพริบ `_` ที่ส่วนท้ายของข้อความ ช่วยเพิ่มบรรยากาศแบบ Command Line สมจริง
-4. **โหมดรอการกดปุ่ม (`waitForUserInput`):**  
+5. **โหมดรอการกดปุ่ม (`waitForUserInput`):**  
    สามารถติ๊กถูกเพื่อให้ระบบรอผู้เล่นกดปุ่ม Spacebar หรือคลิกเมาก่อนกระโดดเข้าสู่ด่านจริง
 
 ---

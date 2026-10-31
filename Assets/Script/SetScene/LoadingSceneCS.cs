@@ -9,8 +9,9 @@ using TMPro;
 /// <summary>
 /// ควบคุมหน้าโหลดดิ้งหลอกๆ (Fake Loading Scene) สไตล์ Command Line / Terminal Interface
 /// - อ่านด่านที่เราอยู่ (currentScene) และด่านที่เราจะส่งไป (targetScene) จาก DB (game_progress.json)
-/// - แสดงผลคอนโซลแบบ Terminal / Command Line พิมพ์ข้อความ Log และแถบ ASCII Progress Bar
-/// - รองรับ UI แบบมาตรฐาน (Slider, Image Fill, TMP Text) ควบคู่กับโหมด Command Line
+/// - แสดงผลคอนโซลแบบ Terminal / Command Line พิมพ์ข้อความ Log, ทิปคำแนะนำ และแถบ ASCII Progress Bar
+/// - รองรับ UI แบบมาตรฐาน (Slider, Image Fill, TMP Text, Tip Text) ควบคู่กับโหมด Command Line
+/// - มีระบบสุ่มทิปคำแนะนำการเล่น (Game Tips) ที่หลากหลายและเป็นประโยชน์
 /// - มีระบบสร้าง Terminal Canvas อัตโนมัติหากยังไม่ได้จัด UI ไว้ในฉาก
 /// - จำลองการโหลดแบบหลอกๆ (Fake Loading) พร้อมโหลดฉากจริงแบบ Asynchronous เบื้องหลัง
 /// </summary>
@@ -61,8 +62,35 @@ public class LoadingSceneCS : MonoBehaviour
     [Tooltip("ข้อความแสดงเปอร์เซ็นต์ เช่น 100%")]
     [SerializeField] private TMP_Text progressPercentageText;
 
-    [Tooltip("ข้อความแสดงทิปแนะนำการเล่น")]
+    [Header("UI Displays - ทิปคำแนะนำการเล่น (Game Tips)")]
+    [Tooltip("ข้อความแสดงทิปแนะนำการเล่นบน UI ทั่วไป")]
     [SerializeField] private TMP_Text tipText;
+
+    [Tooltip("รูปแบบข้อความแสดงทิป เช่น 'TIP: {0}'")]
+    [SerializeField] private string tipFormat = "TIP: {0}";
+
+    [Tooltip("แสดงทิปคำแนะนำแทรกลงในคอนโซล Command Line ด้วยหรือไม่")]
+    [SerializeField] private bool showTipInCommandLine = true;
+
+    [Tooltip("รายการข้อความทิปแนะนำการเล่นที่จะสุ่มแสดง")]
+    [TextArea(2, 4)]
+    [SerializeField] private string[] tips = new string[]
+    {
+        "คลิกซ้าย [Left Click] หรือกด [J] เพื่อฟันโจมตีประชิด ตัวละครจะฟันไปตามทิศทางของเคอร์เซอร์เมาส์!",
+        "คลิกขวา [Right Click] หรือกด [K] เพื่อยิงกระสุนโจมตีระยะไกลใส่ศัตรูจากระยะปลอดภัย",
+        "กดปุ่ม [Spacebar] เพื่อแดช (Dash) พุ่งหลบการโจมตีและทะลุผ่านช่องแคบได้อย่างรวดเร็ว",
+        "การเดินชนตัวศัตรูจะไม่ลดเลือด — คุณจะเสียเลือดเฉพาะเมื่อถูกฟันหรือโดนท่าโจมตีเท่านั้น",
+        "หากเลือดเต็มอยู่แล้ว การเก็บหัวใจสีแดงจะช่วยขยายช่องหัวใจสูงสุด (Max Hearts) เพิ่มขึ้น!",
+        "ฟันทำลายกล่องไม้และหีบสมบัติตามแมปเพื่อค้นหาขวดเลือดและไอเทมฟื้นฟูพลังชีวิต",
+        "เมื่อโดนโจมตี ตัวละครจะมีช่วงเวลาอมตะและกระพริบชั่วครู่ ให้ใช้จังหวะนั้นรีบถอยออกมาตั้งหลัก",
+        "จำนวนหัวใจสูงสุดที่อัปเกรดมาจะถูกบันทึกข้ามด่านเสมอ ยกเว้นด่านเริ่มต้น LV00 และ LV01",
+        "ระวังการชาร์จยิง 'ลำแสงไม้บรรทัด' ของบอสอาจารย์รัตติกาล ให้สังเกตแนวเล็งแล้วแดชหลบในแนวตั้งทันที!",
+        "กับดักคัตเตอร์และดินสอ EE ของบอสสามารถสร้างความเสียหายรุนแรงได้ อย่าลืมมองพื้นก่อนก้าวเดินเสมอ",
+        "คุณสามารถกดปุ่ม [ESC] ระหว่างเล่นเพื่อหยุดเกมชั่วคราว ปรับการตั้งค่า หรือเริ่มด่านใหม่ได้ทุกเมื่อ",
+        "ศัตรูนักดาบจะเตรียมตัวฟันเมื่อเข้าใกล้ สังเกตท่าทางเงื้อดาบแล้วก้าวถอยหลังเพื่อสวนกลับ!",
+        "กระสุนของศัตรูระยะไกลสามารถหลบได้ด้วยการจับจังหวะแดชผ่านกระสุน",
+        "หากพลังชีวิตเหลือน้อย ให้รักษาระยะห่างและใช้การโจมตีระยะไกลเพื่อความปลอดภัย"
+    };
 
     [Header("Fake Loading Settings")]
     [Tooltip("ระยะเวลาการโหลดหลอกๆ ขั้นต่ำ (วินาที)")]
@@ -80,6 +108,7 @@ public class LoadingSceneCS : MonoBehaviour
 
     private string currentSceneName;
     private string targetSceneName;
+    private string selectedTip = "";
     private bool isLoadingStarted = false;
 
     // สำหรับ Terminal Engine
@@ -123,7 +152,7 @@ public class LoadingSceneCS : MonoBehaviour
     }
 
     /// <summary>
-    /// อ่านข้อมูลจาก DB และแสดงผลบน UI
+    /// อ่านข้อมูลจาก DB, สุ่มทิป และแสดงผลบน UI
     /// </summary>
     private void InitializeLoadingScreen()
     {
@@ -132,6 +161,9 @@ public class LoadingSceneCS : MonoBehaviour
 
         currentSceneName = !string.IsNullOrEmpty(progressData.currentScene) ? progressData.currentScene : fallbackSceneName;
         targetSceneName = !string.IsNullOrEmpty(progressData.targetScene) ? progressData.targetScene : fallbackSceneName;
+
+        // สุ่มทิปคำแนะนำการเล่น
+        selectedTip = GetRandomTip();
 
         // อัปเดต UI ข้อความทั่วไป
         if (currentSceneText != null)
@@ -144,9 +176,28 @@ public class LoadingSceneCS : MonoBehaviour
             targetSceneText.text = string.Format(targetSceneFormat, targetSceneName);
         }
 
+        // อัปเดต UI ทิปคำแนะนำ
+        if (tipText != null)
+        {
+            tipText.text = string.Format(tipFormat, selectedTip);
+        }
+
         UpdateProgressVisuals(0f);
 
-        Debug.Log($"[LoadingScene] โหลดหน้า Loading: จากด่าน '{currentSceneName}' -> กำลังไปด่าน '{targetSceneName}'");
+        Debug.Log($"[LoadingScene] โหลดหน้า Loading: จากด่าน '{currentSceneName}' -> กำลังไปด่าน '{targetSceneName}' | ทิป: {selectedTip}");
+    }
+
+    /// <summary>
+    /// สุ่มทิปคำแนะนำจากอาร์เรย์ tips
+    /// </summary>
+    public string GetRandomTip()
+    {
+        if (tips != null && tips.Length > 0)
+        {
+            int index = Random.Range(0, tips.Length);
+            return tips[index];
+        }
+        return "สำรวจพื้นที่ให้ทั่วเพื่อค้นหาไอเทมและความลับที่ซ่อนอยู่!";
     }
 
     /// <summary>
@@ -192,6 +243,12 @@ public class LoadingSceneCS : MonoBehaviour
             "> [MEMORY] Allocating scene buffer blocks & physics matrix...",
             "> [STREAM_LOAD] Transferring asset packages & shaders to GPU...",
         };
+
+        // หากเปิดแสดงทิปใน Command Line ให้เพิ่มบรรทัดทิปแทรกเข้าไป
+        if (showTipInCommandLine && !string.IsNullOrEmpty(selectedTip))
+        {
+            bootSequenceLogs.Add($"> <color=#FFD700>[TACTICAL_INTEL]</color> <color=#FFF275>{selectedTip}</color>");
+        }
 
         // เริ่มต้นแสดงผล Command Line ขั้นต้น
         if (useCommandLineMode)
@@ -394,7 +451,7 @@ public class LoadingSceneCS : MonoBehaviour
         GameObject bgObj = new GameObject("TerminalBackground");
         bgObj.transform.SetParent(canvas.transform, false);
         Image bgImage = bgObj.AddComponent<Image>();
-        bgImage.color = new Color(0.04f, 0.05f, 0.06f, 1f); // ดำด้านสไตล์หน้าจอคอมพิวเตอร์
+        bgImage.color = new Color(0.04f, 0.05f, 0.06f, 1f);
         RectTransform bgRect = bgObj.GetComponent<RectTransform>();
         bgRect.anchorMin = Vector2.zero;
         bgRect.anchorMax = Vector2.one;
@@ -407,8 +464,8 @@ public class LoadingSceneCS : MonoBehaviour
         Image boxImage = consoleBox.AddComponent<Image>();
         boxImage.color = new Color(0.08f, 0.10f, 0.12f, 0.95f);
         RectTransform boxRect = consoleBox.GetComponent<RectTransform>();
-        boxRect.anchorMin = new Vector2(0.08f, 0.08f);
-        boxRect.anchorMax = new Vector2(0.92f, 0.92f);
+        boxRect.anchorMin = new Vector2(0.06f, 0.06f);
+        boxRect.anchorMax = new Vector2(0.94f, 0.94f);
         boxRect.offsetMin = Vector2.zero;
         boxRect.offsetMax = Vector2.zero;
 
@@ -438,26 +495,53 @@ public class LoadingSceneCS : MonoBehaviour
         headerTitleRect.offsetMin = Vector2.zero;
         headerTitleRect.offsetMax = Vector2.zero;
 
+        // แถบแสดงทิปด้านล่าง (Footer Tip Box)
+        GameObject tipBar = new GameObject("TipFooterBar");
+        tipBar.transform.SetParent(consoleBox.transform, false);
+        Image tipBarImage = tipBar.AddComponent<Image>();
+        tipBarImage.color = new Color(0.06f, 0.08f, 0.10f, 0.9f);
+        RectTransform tipBarRect = tipBar.GetComponent<RectTransform>();
+        tipBarRect.anchorMin = new Vector2(0f, 0f);
+        tipBarRect.anchorMax = new Vector2(1f, 0.08f);
+        tipBarRect.offsetMin = Vector2.zero;
+        tipBarRect.offsetMax = Vector2.zero;
+
+        // ข้อความทิปในแถบล่าง
+        GameObject tipTextObj = new GameObject("TipText");
+        tipTextObj.transform.SetParent(tipBar.transform, false);
+        TextMeshProUGUI footerTipText = tipTextObj.AddComponent<TextMeshProUGUI>();
+        footerTipText.fontSize = 18;
+        footerTipText.color = new Color(1f, 0.88f, 0.4f, 1f); // สีเหลืองทอง
+        footerTipText.alignment = TextAlignmentOptions.MidlineLeft;
+        footerTipText.margin = new Vector4(25, 0, 25, 0);
+        footerTipText.text = $"[ TACTICAL TIP ]: {GetRandomTip()}";
+        RectTransform tipTextRect = tipTextObj.GetComponent<RectTransform>();
+        tipTextRect.anchorMin = Vector2.zero;
+        tipTextRect.anchorMax = Vector2.one;
+        tipTextRect.offsetMin = Vector2.zero;
+        tipTextRect.offsetMax = Vector2.zero;
+        tipText = footerTipText; // ผูกไว้กับตัวแปร tipText อัตโนมัติ
+
         // สร้าง Text สำหรับพิมพ์ผลลัพธ์ Command Line
         GameObject terminalTextObj = new GameObject("TerminalText");
         terminalTextObj.transform.SetParent(consoleBox.transform, false);
         TextMeshProUGUI tmp = terminalTextObj.AddComponent<TextMeshProUGUI>();
-        tmp.fontSize = 22;
+        tmp.fontSize = 21;
         tmp.color = new Color(0.2f, 1.0f, 0.4f, 1f); // สีเขียว Matrix Terminal
-        tmp.lineSpacing = 16f;
+        tmp.lineSpacing = 14f;
         tmp.alignment = TextAlignmentOptions.TopLeft;
         tmp.enableWordWrapping = true;
         tmp.overflowMode = TextOverflowModes.Truncate;
-        tmp.margin = new Vector4(30, 30, 30, 30);
+        tmp.margin = new Vector4(30, 25, 30, 20);
 
         RectTransform textRect = terminalTextObj.GetComponent<RectTransform>();
-        textRect.anchorMin = Vector2.zero;
+        textRect.anchorMin = new Vector2(0f, 0.08f);
         textRect.anchorMax = new Vector2(1f, 0.93f);
         textRect.offsetMin = Vector2.zero;
         textRect.offsetMax = Vector2.zero;
 
         terminalOutputText = tmp;
-        Debug.Log("[LoadingScene] สร้าง Dynamic Command Line Terminal UI สำเร็จเรียบร้อย");
+        Debug.Log("[LoadingScene] สร้าง Dynamic Command Line Terminal UI พร้อม Footer Tip Box สำเร็จเรียบร้อย");
     }
 
     public string CurrentSceneName => currentSceneName;

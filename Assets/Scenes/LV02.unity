@@ -1733,6 +1733,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   nextSceneName: Lobby
+  useLoadingScene: 1
+  loadingSceneName: LoadingScene
+  playerTag: Player
+  markCurrentStageCleared: 1
 --- !u!61 &84724046
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -9409,7 +9413,7 @@ Transform:
   m_GameObject: {fileID: 701992462}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -20.8, y: 0.5, z: 8.563868}
+  m_LocalPosition: {x: -5.26, y: -1, z: 8.563868}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -10001,7 +10005,7 @@ Transform:
   m_GameObject: {fileID: 784724710}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -11.9, y: -25.6, z: 8.563868}
+  m_LocalPosition: {x: -21.2, y: -21.2, z: 8.563868}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -10274,7 +10278,7 @@ Transform:
   m_GameObject: {fileID: 801929232}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 4.7, y: 1.01, z: -0.82064116}
+  m_LocalPosition: {x: -2.66, y: 0.27, z: -0.82064116}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -12438,6 +12442,12 @@ MonoBehaviour:
     \u0E2A\u0E48\u0E07\u0E18\u0E35\u0E2A\u0E34\u0E17\u0E2D\u0E32\u0E08\u0E32\u0E23\u0E22\u0E4C\u0E01\u0E48\u0E2D\u0E19\u0E21\u0E31\u0E49\u0E22"
   dialogueTextUI: {fileID: 1101102207}
   dialogueDuration: 3
+  idleSprite: {fileID: 146176395, guid: ac0e7d3ac47864b488d74b83ef935afc, type: 3}
+  attackSprite: {fileID: -86113294, guid: ac0e7d3ac47864b488d74b83ef935afc, type: 3}
+  pencilAttackSprite: {fileID: 0}
+  boardAttackSprite: {fileID: 0}
+  cutterAttackSprite: {fileID: 0}
+  beamAttackSprite: {fileID: 0}
   bossMaxHearts: 15
   hasSuperArmor: 1
   bossHealthSlider: {fileID: 1117156800}
@@ -12535,7 +12545,7 @@ BoxCollider2D:
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 1, y: 1}
+    oldSize: {x: 5.29, y: 8.84}
     newSize: {x: 1, y: 1}
     adaptiveTilingThreshold: 0.5
     drawMode: 0
@@ -12585,7 +12595,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Sprite: {fileID: 7482667652216324306, guid: 311925a002f4447b3a28927169b83ea6, type: 3}
+  m_Sprite: {fileID: 146176395, guid: ac0e7d3ac47864b488d74b83ef935afc, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -14622,7 +14632,7 @@ Transform:
   m_GameObject: {fileID: 1170891682}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 4.9, y: -54.9, z: 8.563868}
+  m_LocalPosition: {x: 18.75, y: -54.19, z: 8.563868}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -173110,7 +173120,7 @@ Transform:
   m_GameObject: {fileID: 1381049347}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -51.1, y: 38.08, z: 8.563868}
+  m_LocalPosition: {x: -60.71, y: 38.75, z: 8.563868}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -174467,7 +174477,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3678827243551645524, guid: 14c4fd258e5714882961f6ecb9503451, type: 3}
       propertyPath: meleeDamage
-      value: 2
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3678827243551645524, guid: 14c4fd258e5714882961f6ecb9503451, type: 3}
       propertyPath: meleeCooldown
@@ -175726,7 +175736,7 @@ Transform:
   m_GameObject: {fileID: 1663633198}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -25.4, y: 33.2, z: 8.563868}
+  m_LocalPosition: {x: -15.62, y: 23.96, z: 8.563868}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -211080,7 +211090,7 @@ Transform:
   m_GameObject: {fileID: 1852276706}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -32.7, y: 29.8, z: 8.563868}
+  m_LocalPosition: {x: -14.18, y: 34.44, z: 8.563868}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
