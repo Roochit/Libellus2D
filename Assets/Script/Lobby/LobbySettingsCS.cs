@@ -52,9 +52,16 @@ public class LobbySettingsCS : MonoBehaviour
     /// </summary>
     public void SetMasterVolume(float volume)
     {
-        AudioListener.volume = volume;
-        PlayerPrefs.SetFloat(VOLUME_KEY, volume);
-        PlayerPrefs.Save();
+        if (SettingManagerCS.Instance != null)
+        {
+            SettingManagerCS.Instance.SetMasterVolume(volume);
+        }
+        else
+        {
+            AudioListener.volume = volume;
+            PlayerPrefs.SetFloat(VOLUME_KEY, volume);
+            PlayerPrefs.Save();
+        }
     }
 
     /// <summary>
@@ -63,8 +70,15 @@ public class LobbySettingsCS : MonoBehaviour
     /// </summary>
     public void SetFullscreen(bool isFullscreen)
     {
-        Screen.fullScreen = isFullscreen;
-        PlayerPrefs.SetInt(FULLSCREEN_KEY, isFullscreen ? 1 : 0);
-        PlayerPrefs.Save();
+        if (SettingManagerCS.Instance != null)
+        {
+            SettingManagerCS.Instance.SetFullscreen(isFullscreen);
+        }
+        else
+        {
+            Screen.fullScreen = isFullscreen;
+            PlayerPrefs.SetInt(FULLSCREEN_KEY, isFullscreen ? 1 : 0);
+            PlayerPrefs.Save();
+        }
     }
 }

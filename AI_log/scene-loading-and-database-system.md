@@ -8,6 +8,9 @@
 - [`Assets/Script/SetScene/LoadingSceneCS.cs`](file:///Users/mac_air_m4/Documents/Unity_Project/Libellus2D/Assets/Script/SetScene/LoadingSceneCS.cs)  
 - [`Assets/Script/Player/PlayerHealthCS.cs`](file:///Users/mac_air_m4/Documents/Unity_Project/Libellus2D/Assets/Script/Player/PlayerHealthCS.cs)  
 - [`Assets/Script/UI/GameOverManagerCS.cs`](file:///Users/mac_air_m4/Documents/Unity_Project/Libellus2D/Assets/Script/UI/GameOverManagerCS.cs)  
+- [`Assets/Script/Lobby/LobbyManagerCS.cs`](file:///Users/mac_air_m4/Documents/Unity_Project/Libellus2D/Assets/Script/Lobby/LobbyManagerCS.cs)  
+- [`Assets/Script/UI/ButtonHoverEffectCS.cs`](file:///Users/mac_air_m4/Documents/Unity_Project/Libellus2D/Assets/Script/UI/ButtonHoverEffectCS.cs)  
+- [`Assets/Script/Settings/SettingManagerCS.cs`](file:///Users/mac_air_m4/Documents/Unity_Project/Libellus2D/Assets/Script/Settings/SettingManagerCS.cs)  
 **ไฟล์ฐานข้อมูล (Database JSON):**  
 - [`db/game_progress.json`](file:///Users/mac_air_m4/Documents/Unity_Project/Libellus2D/db/game_progress.json)  
 - [`db/player_health.json`](file:///Users/mac_air_m4/Documents/Unity_Project/Libellus2D/db/player_health.json)  
@@ -134,4 +137,43 @@ sequenceDiagram
   - เพิ่มฟังก์ชัน `ResetHealthForDeathRestart(sceneName)` เพื่อกู้คืนเลือดตามระดับ `maxHearts` โดยไม่ลบไฟล์เซฟทิ้งอย่างไร้เงื่อนไข
 - **[`GameOverManagerCS.cs`](file:///Users/mac_air_m4/Documents/Unity_Project/Libellus2D/Assets/Script/UI/GameOverManagerCS.cs):**
   - ในฟังก์ชัน `RestartStage()` และ `GoToLobby()` เปลี่ยนจากการสั่ง `File.Delete(savePath)` เป็นการเรียก `PlayerHealthCS.ResetHealthForDeathRestart(currentScene)` เพื่อไม่ให้ `maxHearts` ของผู้เล่นสูญหายเมื่อตายในด่านระดับสูง
+
+---
+
+## 6. การส่งฉากจาก Lobby ผ่านหน้าโหลดดิ้ง และเอฟเฟกต์ปุ่มสีขาว (`ButtonHoverEffectCS`)
+
+### 1. การส่งฉากจาก Lobby ผ่านหน้าโหลดดิ้ง
+ใน [`LobbyManagerCS.cs`](file:///Users/mac_air_m4/Documents/Unity_Project/Libellus2D/Assets/Script/Lobby/LobbyManagerCS.cs) และ [`LobbyGameStarterCS.cs`](file:///Users/mac_air_m4/Documents/Unity_Project/Libellus2D/Assets/Script/Lobby/LobbyGameStarterCS.cs):
+- ฟังก์ชัน **`StartNewGame()`**, **`LoadSaveGame()`**, และ **`LoadScene(sceneName)`** จะทำการบันทึกข้อมูลการเปลี่ยนผ่านลงใน DB:
+  `GameProgressManagerCS.SaveSceneTransition("Lobby", targetSceneName);`
+- ทำการโหลดเข้าสู่ฉากหน้าโหลดดิ้งหลอกๆ (`loadingSceneName = "LoadingScene"`) เพื่อให้หน้าจอ Command Line แสดงผลการบูตระบบและพรีโหลดฉากเป้าหมายก่อนเข้าเล่นจริง
+
+### 2. เอฟเฟกต์เปลี่ยนสีปุ่มเมื่อเมาส์ชี้เป็นสีขาว (`ButtonHoverEffectCS`)
+- สร้างคอมโพเนนต์ [`ButtonHoverEffectCS.cs`](file:///Users/mac_air_m4/Documents/Unity_Project/Libellus2D/Assets/Script/UI/ButtonHoverEffectCS.cs) ซึ่งดักจับ `IPointerEnterHandler` และ `IPointerExitHandler`:
+  - เมื่อเมาส์ชี้บนปุ่ม (Hover / PointerEnter): สลับสีรูปภาพปุ่ม (`Image`) และ/หรือข้อความตัวอักษร (`TMP_Text`) เป็นสีขาวบริสุทธิ์ (`Color.white`)
+  - เมื่อเลื่อนเมาส์ออก (PointerExit): คืนค่าสีเดิมของปุ่มและข้อความอย่างแม่นยำ
+- **ระบบ Auto-Apply ใน `LobbyManagerCS`:**
+  เมื่อหน้า Lobby เริ่มทำงาน สคริปต์จะค้นหาปุ่มทั้งหมดในฉาก (รวมถึงปุ่มใน `SettingCanvas` ที่ซ่อนอยู่) และติดตั้งเอฟเฟกต์สีปุ่มขาวให้อัตโนมัติทันที
+
+---
+
+## 7. ระบบจัดการการตั้งค่ารวมศูนย์ (`SettingManagerCS`)
+
+สร้างคอมโพเนนต์ [`SettingManagerCS.cs`](file:///Users/mac_air_m4/Documents/Unity_Project/Libellus2D/Assets/Script/Settings/SettingManagerCS.cs) ในรูปแบบ Singleton (`SettingManagerCS.Instance`) เพื่อดูแลระบบ Setting ทั้งหมด:
+
+1. **การควบคุมเสียง (Audio Controls):**
+   - **`SetMasterVolume(float volume)`**: ปรับระดับเสียง Master Volume (0.0 ถึง 1.0) ผ่าน `AudioListener.volume` และบันทึกลง PlayerPrefs
+   - **`SetBGMVolume(float volume)`** & **`SetSFXVolume(float volume)`**: รองรับการแยกเสียงเพลงและเสียงเอฟเฟกต์
+2. **การควบคุมจอแสดงผล (Display Controls):**
+   - **`SetFullscreen(bool isFullscreen)`**: สลับโหมดเต็มจอ / หน้าต่าง ผ่าน `Screen.fullScreen`
+   - **`SetResolutionIndex(int index)`**: ปรับความละเอียดหน้าจอตามรายการที่จอภาพรองรับ
+   - **`SetVSync(bool isVSync)`**: เปิด/ปิด V-Sync ผ่าน `QualitySettings.vSyncCount`
+3. **การเปิด/ปิดหน้าต่างเมนู (Panel Controls):**
+   - **`OpenSettings()`**: เปิดหน้าต่าง `SettingCanvas` และซ่อน `HomeManuCanvas`
+   - **`CloseSettings()`**: ปิดหน้าต่าง `SettingCanvas` และคืนค่า `HomeManuCanvas`
+   - **`ResetToDefaults()`**: คืนค่าการตั้งค่าทั้งหมดกลับสู่ค่าเริ่มต้น
+4. **ระบบ Auto-Find UI อัจฉริยะ:**
+   - ค้นหา `SettingCanvas` แม้จะถูกปิดใช้งาน (Inactive) อยู่ในฉาก
+   - ค้นหา `Volume-Slider`, `FullSccreen-Toggle`, และผูกฟังก์ชัน `CloseSettings()` เข้ากับปุ่ม `ยืนยัน-btn` อัตโนมัติทันที
+
 

@@ -7,12 +7,20 @@ using UnityEngine.UI;
 /// จัดการระบบการเริ่มเกมและการโหลดเซฟ (ข้อ 1 และ ข้อ 2)
 /// - ผูกฟังก์ชัน StartNewGame() เข้ากับ OnClick ของปุ่ม "เริ่มเกมใหม่"
 /// - ผูกฟังก์ชัน LoadSaveGame() เข้ากับ OnClick ของปุ่ม "โหลดเซฟ / เล่นต่อ"
+/// - ส่งผ่านหน้าโหลดดิ้งหลอกๆ (LoadingSceneCS) พร้อมบันทึกลง DB
 /// </summary>
 public class LobbyGameStarterCS : MonoBehaviour
 {
     [Header("Scene Settings")]
-    [Tooltip("ชื่อฉากที่ต้องการโหลดเข้าเล่นเกม (ค่าเริ่มต้นคือ LV01)")]
-    [SerializeField] private string targetSceneName = "LV01";
+    [Tooltip("ชื่อฉากที่ต้องการโหลดเข้าเล่นเกม (ค่าเริ่มต้นคือ LV00 หรือ LV01)")]
+    [SerializeField] private string targetSceneName = "LV00";
+
+    [Header("Loading Scene Settings")]
+    [Tooltip("เปิดใช้งานการเปลี่ยนฉากผ่านหน้า Loading หลอกๆ หรือไม่")]
+    [SerializeField] private bool useLoadingScene = true;
+
+    [Tooltip("ชื่อฉากของหน้าโหลดดิ้งหลอกๆ (ค่าเริ่มต้น: LoadingScene)")]
+    [SerializeField] private string loadingSceneName = "LoadingScene";
 
     [Header("UI Reference (Optional)")]
     [Tooltip("ปุ่มโหลดเซฟ (หากลากใส่ไว้ สคริปต์จะช่วยปิดการกดปุ่มให้อัตโนมัติหากไม่มีไฟล์เซฟ)")]
@@ -22,7 +30,6 @@ public class LobbyGameStarterCS : MonoBehaviour
 
     private void Awake()
     {
-        // ที่อยู่ไฟล์เซฟเดียวกับ PlayerHealthCS
         saveFilePath = Path.Combine(Application.dataPath, "..", "db", "player_health.json");
     }
 
@@ -38,18 +45,22 @@ public class LobbyGameStarterCS : MonoBehaviour
     }
 
     /// <summary>
-    /// 1. ปุ่มเริ่มเกมใหม่ (New Game): ลบไฟล์เซฟเดิมเพื่อให้เริ่มใหม่ที่เลือด 3 ดวง แล้วโหลดฉาก
+    /// 1. ปุ่มเริ่มเกมใหม่ (New Game): ลบไฟล์เซฟเดิม บันทึก DB แล้วส่งผ่านหน้าโหลดดิ้ง
     /// </summary>
     public void StartNewGame()
     {
         Time.timeScale = 1f;
         DeleteSaveData();
         GameProgressManagerCS.DeleteProgressData();
-        SceneManager.LoadScene(targetSceneName);
+
+        // บันทึกการเปลี่ยนฉากลงใน DB
+        GameProgressManagerCS.SaveSceneTransition("Lobby", targetSceneName);
+
+        LoadSceneThroughLoading(targetSceneName);
     }
 
     /// <summary>
-    /// 2. ปุ่มโหลดเซฟเกม (Load / Continue Game): โหลดเข้าฉากโดยใช้ข้อมูลเลือดและด่านล่าสุดจากเซฟเดิม
+    /// 2. ปุ่มโหลดเซฟเกม (Load / Continue Game): โหลดเข้าฉากเดิมและส่งผ่านหน้าโหลดดิ้ง
     /// </summary>
     public void LoadSaveGame()
     {
@@ -58,7 +69,9 @@ public class LobbyGameStarterCS : MonoBehaviour
         {
             string sceneToLoad = GameProgressManagerCS.GetSavedSceneName(fallback: targetSceneName);
             Debug.Log($"[LobbyGameStarter] พบไฟล์เซฟเดิม -> กำลังโหลดเข้าด่าน {sceneToLoad}...");
-            SceneManager.LoadScene(sceneToLoad);
+
+            GameProgressManagerCS.SaveSceneTransition("Lobby", sceneToLoad);
+            LoadSceneThroughLoading(sceneToLoad);
         }
         else
         {
@@ -72,7 +85,27 @@ public class LobbyGameStarterCS : MonoBehaviour
     public void LoadCustomScene(string sceneName)
     {
         Time.timeScale = 1f;
-        SceneManager.LoadScene(sceneName);
+        GameProgressManagerCS.SaveSceneTransition("Lobby", sceneName);
+        LoadSceneThroughLoading(sceneName);
+    }
+
+    private void LoadSceneThroughLoading(string destinationScene)
+    {
+        if (useLoadingScene && !string.IsNullOrEmpty(loadingSceneName))
+        {
+            if (Application.CanStreamedLevelBeLoaded(loadingSceneName))
+            {
+                Debug.Log($"[LobbyGameStarter] ส่งผู้เล่นผ่านหน้าโหลดดิ้ง '{loadingSceneName}' -> ด่าน: {destinationScene}");
+                SceneManager.LoadScene(loadingSceneName);
+                return;
+            }
+            else
+            {
+                Debug.LogWarning($"[LobbyGameStarter] ไม่พบฉาก '{loadingSceneName}' ใน Build Settings! กำลังโหลดเข้า '{destinationScene}' โดยตรง");
+            }
+        }
+
+        SceneManager.LoadScene(destinationScene);
     }
 
     /// <summary>
