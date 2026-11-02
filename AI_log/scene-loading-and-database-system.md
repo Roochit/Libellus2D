@@ -11,11 +11,14 @@
 - [`Assets/Script/Lobby/LobbyManagerCS.cs`](file:///Users/mac_air_m4/Documents/Unity_Project/Libellus2D/Assets/Script/Lobby/LobbyManagerCS.cs)  
 - [`Assets/Script/UI/ButtonHoverEffectCS.cs`](file:///Users/mac_air_m4/Documents/Unity_Project/Libellus2D/Assets/Script/UI/ButtonHoverEffectCS.cs)  
 - [`Assets/Script/Settings/SettingManagerCS.cs`](file:///Users/mac_air_m4/Documents/Unity_Project/Libellus2D/Assets/Script/Settings/SettingManagerCS.cs)  
+- [`Assets/Script/SetScene/EndCreditCS.cs`](file:///Users/mac_air_m4/Documents/Unity_Project/Libellus2D/Assets/Script/SetScene/EndCreditCS.cs)  
 **ไฟล์ฐานข้อมูล (Database JSON):**  
 - [`db/game_progress.json`](file:///Users/mac_air_m4/Documents/Unity_Project/Libellus2D/db/game_progress.json)  
 - [`db/player_health.json`](file:///Users/mac_air_m4/Documents/Unity_Project/Libellus2D/db/player_health.json)  
+- [`db/EndGame_Log.json`](file:///Users/mac_air_m4/Documents/Unity_Project/Libellus2D/db/EndGame_Log.json)  
 **ฉากเกี่ยวข้อง:**  
 - [`Assets/Scenes/LoadingScene.unity`](file:///Users/mac_air_m4/Documents/Unity_Project/Libellus2D/Assets/Scenes/LoadingScene.unity)  
+- [`Assets/Scenes/End_Credit.unity`](file:///Users/mac_air_m4/Documents/Unity_Project/Libellus2D/Assets/Scenes/End_Credit.unity)  
 
 ---
 
@@ -175,5 +178,56 @@ sequenceDiagram
 4. **ระบบ Auto-Find UI อัจฉริยะ:**
    - ค้นหา `SettingCanvas` แม้จะถูกปิดใช้งาน (Inactive) อยู่ในฉาก
    - ค้นหา `Volume-Slider`, `FullSccreen-Toggle`, และผูกฟังก์ชัน `CloseSettings()` เข้ากับปุ่ม `ยืนยัน-btn` อัตโนมัติทันที
+
+---
+
+## 8. ระบบบันทึกสถิติเมื่อเล่นจบเกม (`db/EndGame_Log.json` & `EndCreditCS`)
+
+เมื่อผู้เล่นผ่านด่านทั้งหมดจนเข้าสู่ฉากจบ **End_Credit** สคริปต์ [`EndCreditCS.cs`](file:///Users/mac_air_m4/Documents/Unity_Project/Libellus2D/Assets/Script/SetScene/EndCreditCS.cs) จะทำการรวบรวมข้อมูลสถานะการเล่นและบันทึกลงในไฟล์ [`db/EndGame_Log.json`](file:///Users/mac_air_m4/Documents/Unity_Project/Libellus2D/db/EndGame_Log.json) อัตโนมัติ:
+
+### 1. โครงสร้างข้อมูล `EndGame_Log.json`:
+```json
+{
+    "gameCompleted": true,
+    "lastCompletionTimestamp": "2026-11-02 20:28:00",
+    "totalClearCount": 1,
+    "finalCurrentHearts": 5,
+    "finalMaxHearts": 6,
+    "clearedStages": [
+        "LV00",
+        "LV01",
+        "BossLV01",
+        "LV02",
+        "End_Credit"
+    ],
+    "defeatedBosses": [],
+    "clearHistory": [
+        {
+            "clearIndex": 1,
+            "timestamp": "2026-11-02 20:28:00",
+            "currentHearts": 5,
+            "maxHearts": 6,
+            "totalStagesCleared": 5,
+            "clearedStages": [
+                "LV00",
+                "LV01",
+                "BossLV01",
+                "LV02",
+                "End_Credit"
+            ],
+            "defeatedBosses": []
+        }
+    ]
+}
+```
+
+### 2. ข้อมูลที่ได้รับการบันทึก:
+- **`gameCompleted`**: สถานะยืนยันว่าผู้เล่นจบเกมสำเร็จ (`true`)
+- **`lastCompletionTimestamp`**: เวลาและวันที่ที่จบเกมล่าสุด
+- **`totalClearCount`**: จำนวนรอบที่เล่นจบทั้งหมด (จะนับสะสมต่อเนื่องหากเล่นจบอีกรอบ)
+- **`finalCurrentHearts` & `finalMaxHearts`**: จำนวนเลือดและหลอดเลือดสูงสุดที่เหลืออยู่ ณ ตอนจบเกม ดึงมาจาก `player_health.json`
+- **`clearedStages`**: รายชื่อด่านทั้งหมดที่ผ่าน ดึงมาจาก `game_progress.json`
+- **`defeatedBosses`**: รายชื่อหัวหน้า/บอสที่ปราบได้
+- **`clearHistory`**: บันทึกประวัติของแต่ละรอบ (Run History) เพื่อให้สามารถตรวจสอบสถิติย้อนหลังได้ทุกครั้งที่จบเกม
 
 

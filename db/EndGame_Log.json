@@ -1,0 +1,33 @@
+{
+    "gameCompleted": true,
+    "lastCompletionTimestamp": "2026-11-02 20:28:00",
+    "totalClearCount": 1,
+    "finalCurrentHearts": 5,
+    "finalMaxHearts": 6,
+    "clearedStages": [
+        "LV00",
+        "LV01",
+        "BossLV01",
+        "LV02",
+        "End_Credit"
+    ],
+    "defeatedBosses": [],
+    "clearHistory": [
+        {
+            "clearIndex": 1,
+            "timestamp": "2026-11-02 20:28:00",
+            "currentHearts": 5,
+            "maxHearts": 6,
+            "totalStagesCleared": 5,
+            "clearedStages": [
+                "LV00",
+                "LV01",
+                "BossLV01",
+                "LV02",
+                "End_Credit"
+            ],
+            "defeatedBosses": []
+        }
+    ]
+}
+
