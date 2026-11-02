@@ -1,5 +1,5 @@
 {
-    "masterVolume": 0.3746074140071869,
+    "masterVolume": 0.2764086425304413,
     "bgmVolume": 1.0,
     "sfxVolume": 1.0,
     "isFullscreen": true,
@@ -7,5 +7,5 @@
     "resolutionHeight": 1080,
     "resolutionIndex": 0,
     "isVSync": false,
-    "lastSavedTimestamp": "2026-11-02 22:00:26"
+    "lastSavedTimestamp": "2026-11-02 23:22:48"
 }

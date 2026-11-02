@@ -197,7 +197,7 @@ MonoBehaviour:
   meleeHitboxPrefab: {fileID: 3755717365762094065, guid: c302ccdf7cef341769390f400fd07863, type: 3}
   meleeHitboxScaleMultiplier: {x: 1, y: 1}
   meleeDuration: 0.15
-  meleeCooldown: 0.15
+  meleeCooldown: 0.3
   meleeDamage: 1
   bulletPrefab: {fileID: 1149940309504906639, guid: 696f3a6a834384589847c4e7d532daf2, type: 3}
   rangedCooldown: 2

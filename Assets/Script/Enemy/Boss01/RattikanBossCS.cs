@@ -22,7 +22,8 @@ public class RattikanBossCS : EnemyCS
     [SerializeField] private string bossName = "อาจารย์รัตติกาล (LV01)";
     [TextArea(2, 4)]
     [SerializeField] private string introQuote = "ก่อนจะไปซื้อเกมมาเล่น ส่งธีสิทอาจารย์ก่อนมั้ย";
-    [SerializeField] private TextMeshProUGUI dialogueTextUI = default; // UI แสดงข้อความพูดของบอส (ถ้ามี)
+    [SerializeField] private TextMeshProUGUI dialogueTextUI = default;
+    [SerializeField] private GameObject dialogBox = default;
     [SerializeField] private float dialogueDuration = 3f;
 
     [Header("=== Boss Visual & Pose Settings ===")]
@@ -98,6 +99,7 @@ public class RattikanBossCS : EnemyCS
     private int currentAttackIndex = 0;
     private Coroutine activeAttackRoutine;
     private bool isDialogueActive = false;
+    private bool isDialogBox = false;
 
     protected override void Awake()
     {
@@ -768,9 +770,10 @@ public class RattikanBossCS : EnemyCS
     {
         Debug.Log($"[Rattikan Boss] \"{quote}\"");
 
-        if (dialogueTextUI != null)
+        if (dialogueTextUI != null && dialogBox != null)
         {
             dialogueTextUI.gameObject.SetActive(true);
+            dialogBox.gameObject.SetActive(true);
             dialogueTextUI.text = quote;
 
             if (!isDialogueActive)
@@ -784,9 +787,10 @@ public class RattikanBossCS : EnemyCS
     {
         isDialogueActive = true;
         yield return new WaitForSeconds(delay);
-        if (dialogueTextUI != null)
+        if (dialogueTextUI != null && dialogBox != null)
         {
             dialogueTextUI.gameObject.SetActive(false);
+            dialogBox.gameObject.SetActive(false);
         }
         isDialogueActive = false;
     }
