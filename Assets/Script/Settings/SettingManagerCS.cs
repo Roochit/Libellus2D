@@ -1,14 +1,33 @@
+using System;
+using System.IO;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
 /// <summary>
+/// โครงสร้างข้อมูลสำหรับการบันทึกการตั้งค่าลงไฟล์ db/game_seting.json
+/// </summary>
+[System.Serializable]
+public class GameSettingData
+{
+    public float masterVolume = 1.0f;
+    public float bgmVolume = 1.0f;
+    public float sfxVolume = 1.0f;
+    public bool isFullscreen = true;
+    public int resolutionWidth = 1920;
+    public int resolutionHeight = 1080;
+    public int resolutionIndex = 0;
+    public bool isVSync = false;
+    public string lastSavedTimestamp = "";
+}
+
+/// <summary>
 /// ระบบจัดการการตั้งค่าของเกมแบบรวมศูนย์ (Centralized Setting Manager)
 /// - ควบคุมระดับเสียง (Master Volume, BGM, SFX)
 /// - ควบคุมการแสดงผล (Fullscreen, Resolution, V-Sync)
 /// - ควบคุมการเปิด/ปิดหน้าต่างการตั้งค่า (SettingCanvas / HomeMenuCanvas)
-/// - บันทึกและโหลดค่าอัตโนมัติผ่าน PlayerPrefs
+/// - บันทึกและโหลดข้อมูลลงทั้ง PlayerPrefs และ db/game_seting.json อัตโนมัติ
 /// - มีระบบ Auto-Find UI ช่วยค้นหาและผูก Event อัตโนมัติแม้ไม่ได้ลากใส่ใน Inspector
 /// </summary>
 public class SettingManagerCS : MonoBehaviour
@@ -67,6 +86,7 @@ public class SettingManagerCS : MonoBehaviour
 
     private Resolution[] availableResolutions;
     private List<Resolution> filteredResolutions = new List<Resolution>();
+    private GameSettingData currentSettingData = new GameSettingData();
 
     private void Awake()
     {
@@ -94,6 +114,37 @@ public class SettingManagerCS : MonoBehaviour
     }
 
     /// <summary>
+    /// คืนค่าที่อยู่ของไฟล์ db/game_seting.json
+    /// </summary>
+    public static string GetSettingFilePath()
+    {
+        string dbDir = Path.Combine(Application.dataPath, "..", "db");
+        if (!Directory.Exists(dbDir))
+        {
+            Directory.CreateDirectory(dbDir);
+        }
+        return Path.Combine(dbDir, "game_seting.json");
+    }
+
+    /// <summary>
+    /// บันทึกข้อมูลการตั้งค่าลงไฟล์ db/game_seting.json
+    /// </summary>
+    public void SaveSettingsToJsonFile()
+    {
+        try
+        {
+            currentSettingData.lastSavedTimestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+            string json = JsonUtility.ToJson(currentSettingData, true);
+            File.WriteAllText(GetSettingFilePath(), json);
+            Debug.Log($"[SettingManager] บันทึกการตั้งค่าลง JSON สำเร็จ: {GetSettingFilePath()}");
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"[SettingManager] ไม่สามารถบันทึก game_seting.json ได้: {ex.Message}");
+        }
+    }
+
+    /// <summary>
     /// ค้นหา UI อัตโนมัติจากชื่อ Object ทั่วไปในฉาก (รองรับทั้ง Active และ Inactive Canvas)
     /// </summary>
     private void AutoFindUIElements()
@@ -105,16 +156,16 @@ public class SettingManagerCS : MonoBehaviour
             if (c == null) continue;
 
             if (settingsPanel == null && 
-               (c.name.Equals("SettingCanvas", System.StringComparison.OrdinalIgnoreCase) ||
-                c.name.Equals("SettingsCanvas", System.StringComparison.OrdinalIgnoreCase) ||
-                c.name.Equals("SettingPanel", System.StringComparison.OrdinalIgnoreCase)))
+               (c.name.Equals("SettingCanvas", StringComparison.OrdinalIgnoreCase) ||
+                c.name.Equals("SettingsCanvas", StringComparison.OrdinalIgnoreCase) ||
+                c.name.Equals("SettingPanel", StringComparison.OrdinalIgnoreCase)))
             {
                 settingsPanel = c.gameObject;
             }
             else if (homeMenuPanel == null && 
-                    (c.name.Equals("HomeManuCanvas", System.StringComparison.OrdinalIgnoreCase) ||
-                     c.name.Equals("HomeMenuCanvas", System.StringComparison.OrdinalIgnoreCase) ||
-                     c.name.Equals("HomeMenu", System.StringComparison.OrdinalIgnoreCase)))
+                    (c.name.Equals("HomeManuCanvas", StringComparison.OrdinalIgnoreCase) ||
+                     c.name.Equals("HomeMenuCanvas", StringComparison.OrdinalIgnoreCase) ||
+                     c.name.Equals("HomeMenu", StringComparison.OrdinalIgnoreCase)))
             {
                 homeMenuPanel = c.gameObject;
             }
@@ -128,7 +179,7 @@ public class SettingManagerCS : MonoBehaviour
                 Slider[] sliders = settingsPanel.GetComponentsInChildren<Slider>(true);
                 foreach (var s in sliders)
                 {
-                    if (s.name.IndexOf("volume", System.StringComparison.OrdinalIgnoreCase) >= 0)
+                    if (s.name.IndexOf("volume", StringComparison.OrdinalIgnoreCase) >= 0)
                     {
                         masterVolumeSlider = s;
                         break;
@@ -141,7 +192,7 @@ public class SettingManagerCS : MonoBehaviour
                 Toggle[] toggles = settingsPanel.GetComponentsInChildren<Toggle>(true);
                 foreach (var t in toggles)
                 {
-                    if (t.name.IndexOf("fullscreen", System.StringComparison.OrdinalIgnoreCase) >= 0)
+                    if (t.name.IndexOf("fullscreen", StringComparison.OrdinalIgnoreCase) >= 0)
                     {
                         fullscreenToggle = t;
                         break;
@@ -154,9 +205,9 @@ public class SettingManagerCS : MonoBehaviour
                 Button[] buttons = settingsPanel.GetComponentsInChildren<Button>(true);
                 foreach (var b in buttons)
                 {
-                    if (b.name.IndexOf("ยืนยัน", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
-                        b.name.IndexOf("confirm", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
-                        b.name.IndexOf("close", System.StringComparison.OrdinalIgnoreCase) >= 0)
+                    if (b.name.IndexOf("ยืนยัน", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                        b.name.IndexOf("confirm", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                        b.name.IndexOf("close", StringComparison.OrdinalIgnoreCase) >= 0)
                     {
                         confirmCloseButton = b;
                         break;
@@ -221,44 +272,73 @@ public class SettingManagerCS : MonoBehaviour
     }
 
     /// <summary>
-    /// โหลดและประยุกต์ใช้การตั้งค่าทั้งหมดจาก PlayerPrefs
+    /// โหลดและประยุกต์ใช้การตั้งค่าทั้งหมดจาก db/game_seting.json หรือ PlayerPrefs
     /// </summary>
     public void LoadAndApplyAllSettings()
     {
-        // 1. ระดับเสียง Master Volume (ค่าเริ่มต้น 1.0)
-        float masterVol = PlayerPrefs.GetFloat(MASTER_VOLUME_KEY, 1f);
-        SetMasterVolume(masterVol);
-        if (masterVolumeSlider != null) masterVolumeSlider.value = masterVol;
+        string jsonPath = GetSettingFilePath();
+        bool hasJsonFile = false;
 
-        // 2. ระดับเสียง BGM & SFX (ค่าเริ่มต้น 1.0)
-        float bgmVol = PlayerPrefs.GetFloat(BGM_VOLUME_KEY, 1f);
-        SetBGMVolume(bgmVol);
-        if (bgmVolumeSlider != null) bgmVolumeSlider.value = bgmVol;
+        // 1. ลองอ่านจาก db/game_seting.json ก่อน
+        if (File.Exists(jsonPath))
+        {
+            try
+            {
+                string json = File.ReadAllText(jsonPath).Trim();
+                if (!string.IsNullOrEmpty(json))
+                {
+                    GameSettingData data = JsonUtility.FromJson<GameSettingData>(json);
+                    if (data != null)
+                    {
+                        currentSettingData = data;
+                        hasJsonFile = true;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"[SettingManager] โหลด game_seting.json ล้มเหลว: {ex.Message}");
+            }
+        }
 
-        float sfxVol = PlayerPrefs.GetFloat(SFX_VOLUME_KEY, 1f);
-        SetSFXVolume(sfxVol);
-        if (sfxVolumeSlider != null) sfxVolumeSlider.value = sfxVol;
+        // 2. หากยังไม่มีข้อมูลจาก JSON ให้อ่านจาก PlayerPrefs
+        if (!hasJsonFile)
+        {
+            currentSettingData.masterVolume = PlayerPrefs.GetFloat(MASTER_VOLUME_KEY, 1f);
+            currentSettingData.bgmVolume = PlayerPrefs.GetFloat(BGM_VOLUME_KEY, 1f);
+            currentSettingData.sfxVolume = PlayerPrefs.GetFloat(SFX_VOLUME_KEY, 1f);
+            currentSettingData.isFullscreen = PlayerPrefs.GetInt(FULLSCREEN_KEY, Screen.fullScreen ? 1 : 0) == 1;
+            currentSettingData.isVSync = PlayerPrefs.GetInt(VSYNC_KEY, 0) == 1;
+            currentSettingData.resolutionIndex = PlayerPrefs.GetInt(RESOLUTION_INDEX_KEY, 0);
 
-        // 3. โหมดเต็มจอ Fullscreen (ค่าเริ่มต้นตามขนาดหน้าจอจริง)
-        bool isFull = PlayerPrefs.GetInt(FULLSCREEN_KEY, Screen.fullScreen ? 1 : 0) == 1;
-        SetFullscreen(isFull);
-        if (fullscreenToggle != null) fullscreenToggle.isOn = isFull;
+            // บันทึกสร้างไฟล์ game_seting.json ตั้งต้นทันที
+            SaveSettingsToJsonFile();
+        }
 
-        // 4. V-Sync (ค่าเริ่มต้น 0 = ปิด)
-        bool isVSync = PlayerPrefs.GetInt(VSYNC_KEY, 0) == 1;
-        SetVSync(isVSync);
-        if (vsyncToggle != null) vsyncToggle.isOn = isVSync;
+        // 3. ปรับใช้ค่าเสียง
+        SetMasterVolumeInternal(currentSettingData.masterVolume);
+        if (masterVolumeSlider != null) masterVolumeSlider.value = currentSettingData.masterVolume;
 
-        // 5. ความละเอียดหน้าจอ Resolution
+        SetBGMVolumeInternal(currentSettingData.bgmVolume);
+        if (bgmVolumeSlider != null) bgmVolumeSlider.value = currentSettingData.bgmVolume;
+
+        SetSFXVolumeInternal(currentSettingData.sfxVolume);
+        if (sfxVolumeSlider != null) sfxVolumeSlider.value = currentSettingData.sfxVolume;
+
+        // 4. ปรับใช้การแสดงผล
+        SetFullscreenInternal(currentSettingData.isFullscreen);
+        if (fullscreenToggle != null) fullscreenToggle.isOn = currentSettingData.isFullscreen;
+
+        SetVSyncInternal(currentSettingData.isVSync);
+        if (vsyncToggle != null) vsyncToggle.isOn = currentSettingData.isVSync;
+
+        // 5. ปรับใช้ความละเอียดหน้าจอ
         if (resolutionDropdown != null && filteredResolutions.Count > 0)
         {
-            int defaultResIndex = filteredResolutions.Count - 1; // ความละเอียดสูงสุด
-            int savedResIndex = PlayerPrefs.GetInt(RESOLUTION_INDEX_KEY, defaultResIndex);
-            savedResIndex = Mathf.Clamp(savedResIndex, 0, filteredResolutions.Count - 1);
-
+            int savedResIndex = Mathf.Clamp(currentSettingData.resolutionIndex, 0, filteredResolutions.Count - 1);
             resolutionDropdown.value = savedResIndex;
             resolutionDropdown.RefreshShownValue();
-            SetResolutionIndex(savedResIndex);
+            SetResolutionIndexInternal(savedResIndex);
         }
     }
 
@@ -280,7 +360,6 @@ public class SettingManagerCS : MonoBehaviour
         {
             Resolution res = availableResolutions[i];
 
-            // กรองอัตราส่วน 16:9 ทั่วไปเพื่อความสวยงาม
             string option = $"{res.width} x {res.height} @{res.refreshRateRatio.value:F0}Hz";
             if (!options.Contains(option))
             {
@@ -314,6 +393,12 @@ public class SettingManagerCS : MonoBehaviour
     /// </summary>
     public void SetMasterVolume(float volume)
     {
+        SetMasterVolumeInternal(volume);
+        SaveSettingsToJsonFile();
+    }
+
+    private void SetMasterVolumeInternal(float volume)
+    {
         volume = Mathf.Clamp01(volume);
         AudioListener.volume = volume;
 
@@ -322,6 +407,7 @@ public class SettingManagerCS : MonoBehaviour
             masterVolumeText.text = $"{Mathf.RoundToInt(volume * 100f)}%";
         }
 
+        currentSettingData.masterVolume = volume;
         PlayerPrefs.SetFloat(MASTER_VOLUME_KEY, volume);
         PlayerPrefs.Save();
     }
@@ -331,7 +417,14 @@ public class SettingManagerCS : MonoBehaviour
     /// </summary>
     public void SetBGMVolume(float volume)
     {
+        SetBGMVolumeInternal(volume);
+        SaveSettingsToJsonFile();
+    }
+
+    private void SetBGMVolumeInternal(float volume)
+    {
         volume = Mathf.Clamp01(volume);
+        currentSettingData.bgmVolume = volume;
         PlayerPrefs.SetFloat(BGM_VOLUME_KEY, volume);
         PlayerPrefs.Save();
     }
@@ -341,7 +434,14 @@ public class SettingManagerCS : MonoBehaviour
     /// </summary>
     public void SetSFXVolume(float volume)
     {
+        SetSFXVolumeInternal(volume);
+        SaveSettingsToJsonFile();
+    }
+
+    private void SetSFXVolumeInternal(float volume)
+    {
         volume = Mathf.Clamp01(volume);
+        currentSettingData.sfxVolume = volume;
         PlayerPrefs.SetFloat(SFX_VOLUME_KEY, volume);
         PlayerPrefs.Save();
     }
@@ -351,7 +451,14 @@ public class SettingManagerCS : MonoBehaviour
     /// </summary>
     public void SetFullscreen(bool isFullscreen)
     {
+        SetFullscreenInternal(isFullscreen);
+        SaveSettingsToJsonFile();
+    }
+
+    private void SetFullscreenInternal(bool isFullscreen)
+    {
         Screen.fullScreen = isFullscreen;
+        currentSettingData.isFullscreen = isFullscreen;
         PlayerPrefs.SetInt(FULLSCREEN_KEY, isFullscreen ? 1 : 0);
         PlayerPrefs.Save();
     }
@@ -361,10 +468,20 @@ public class SettingManagerCS : MonoBehaviour
     /// </summary>
     public void SetResolutionIndex(int index)
     {
+        SetResolutionIndexInternal(index);
+        SaveSettingsToJsonFile();
+    }
+
+    private void SetResolutionIndexInternal(int index)
+    {
         if (filteredResolutions.Count == 0 || index < 0 || index >= filteredResolutions.Count) return;
 
         Resolution res = filteredResolutions[index];
         Screen.SetResolution(res.width, res.height, Screen.fullScreen);
+
+        currentSettingData.resolutionIndex = index;
+        currentSettingData.resolutionWidth = res.width;
+        currentSettingData.resolutionHeight = res.height;
 
         PlayerPrefs.SetInt(RESOLUTION_INDEX_KEY, index);
         PlayerPrefs.Save();
@@ -375,7 +492,14 @@ public class SettingManagerCS : MonoBehaviour
     /// </summary>
     public void SetVSync(bool isVSync)
     {
+        SetVSyncInternal(isVSync);
+        SaveSettingsToJsonFile();
+    }
+
+    private void SetVSyncInternal(bool isVSync)
+    {
         QualitySettings.vSyncCount = isVSync ? 1 : 0;
+        currentSettingData.isVSync = isVSync;
         PlayerPrefs.SetInt(VSYNC_KEY, isVSync ? 1 : 0);
         PlayerPrefs.Save();
     }
@@ -385,11 +509,11 @@ public class SettingManagerCS : MonoBehaviour
     /// </summary>
     public void ResetToDefaults()
     {
-        SetMasterVolume(1.0f);
-        SetBGMVolume(1.0f);
-        SetSFXVolume(1.0f);
-        SetFullscreen(true);
-        SetVSync(false);
+        SetMasterVolumeInternal(1.0f);
+        SetBGMVolumeInternal(1.0f);
+        SetSFXVolumeInternal(1.0f);
+        SetFullscreenInternal(true);
+        SetVSyncInternal(false);
 
         if (masterVolumeSlider != null) masterVolumeSlider.value = 1.0f;
         if (bgmVolumeSlider != null) bgmVolumeSlider.value = 1.0f;
@@ -397,6 +521,7 @@ public class SettingManagerCS : MonoBehaviour
         if (fullscreenToggle != null) fullscreenToggle.isOn = true;
         if (vsyncToggle != null) vsyncToggle.isOn = false;
 
+        SaveSettingsToJsonFile();
         Debug.Log("[SettingManager] คืนค่าการตั้งค่ากลับสู่ค่าเริ่มต้นเรียบร้อยแล้ว");
     }
 
@@ -423,10 +548,12 @@ public class SettingManagerCS : MonoBehaviour
     }
 
     /// <summary>
-    /// ปิดหน้าต่างการตั้งค่า และกลับสู่เมนูหลัก
+    /// ปิดหน้าต่างการตั้งค่า และกลับสู่เมนูหลัก พร้อมบันทึกลง JSON
     /// </summary>
     public void CloseSettings()
     {
+        SaveSettingsToJsonFile();
+
         if (settingsPanel != null)
         {
             settingsPanel.SetActive(false);
@@ -437,7 +564,7 @@ public class SettingManagerCS : MonoBehaviour
             homeMenuPanel.SetActive(true);
         }
 
-        Debug.Log("[SettingManager] ปิดหน้าต่างการตั้งค่า");
+        Debug.Log("[SettingManager] ปิดหน้าต่างการตั้งค่า และบันทึกลง game_seting.json");
     }
 
     /// <summary>
@@ -454,4 +581,6 @@ public class SettingManagerCS : MonoBehaviour
             OpenSettings();
         }
     }
+
+    public GameSettingData CurrentSettingData => currentSettingData;
 }

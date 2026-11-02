@@ -1,13 +1,11 @@
 {
-    "currentScene": "LV02",
-    "targetScene": "End_Credit",
-    "highestUnlockedScene": "End_Credit",
+    "currentScene": "BossLV01",
+    "targetScene": "BossLV01",
+    "highestUnlockedScene": "BossLV01",
     "clearedStages": [
         "LV00",
-        "LV01",
-        "BossLV01",
-        "LV02"
+        "LV01"
     ],
     "defeatedBosses": [],
-    "lastSaveTimestamp": "2026-11-02 20:26:39"
+    "lastSaveTimestamp": "2026-11-02 22:01:31"
 }
