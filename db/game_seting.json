@@ -6,6 +6,6 @@
     "resolutionWidth": 1920,
     "resolutionHeight": 1080,
     "resolutionIndex": 0,
-    "isVSync": false,
+    "isVSync": true,
     "lastSavedTimestamp": "2026-11-03 21:30:32"
 }

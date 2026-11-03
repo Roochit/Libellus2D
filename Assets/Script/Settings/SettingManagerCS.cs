@@ -18,7 +18,7 @@ public class GameSettingData
     public int resolutionWidth = 1920;
     public int resolutionHeight = 1080;
     public int resolutionIndex = 0;
-    public bool isVSync = false;
+    public bool isVSync = true;
     public string lastSavedTimestamp = "";
 }
 
@@ -308,7 +308,7 @@ public class SettingManagerCS : MonoBehaviour
             currentSettingData.bgmVolume = PlayerPrefs.GetFloat(BGM_VOLUME_KEY, 1f);
             currentSettingData.sfxVolume = PlayerPrefs.GetFloat(SFX_VOLUME_KEY, 1f);
             currentSettingData.isFullscreen = PlayerPrefs.GetInt(FULLSCREEN_KEY, Screen.fullScreen ? 1 : 0) == 1;
-            currentSettingData.isVSync = PlayerPrefs.GetInt(VSYNC_KEY, 0) == 1;
+            currentSettingData.isVSync = PlayerPrefs.GetInt(VSYNC_KEY, 1) == 1;
             currentSettingData.resolutionIndex = PlayerPrefs.GetInt(RESOLUTION_INDEX_KEY, 0);
 
             // บันทึกสร้างไฟล์ game_seting.json ตั้งต้นทันที
@@ -499,6 +499,7 @@ public class SettingManagerCS : MonoBehaviour
     private void SetVSyncInternal(bool isVSync)
     {
         QualitySettings.vSyncCount = isVSync ? 1 : 0;
+        Application.targetFrameRate = isVSync ? -1 : 60;
         currentSettingData.isVSync = isVSync;
         PlayerPrefs.SetInt(VSYNC_KEY, isVSync ? 1 : 0);
         PlayerPrefs.Save();
@@ -513,13 +514,13 @@ public class SettingManagerCS : MonoBehaviour
         SetBGMVolumeInternal(1.0f);
         SetSFXVolumeInternal(1.0f);
         SetFullscreenInternal(true);
-        SetVSyncInternal(false);
+        SetVSyncInternal(true);
 
         if (masterVolumeSlider != null) masterVolumeSlider.value = 1.0f;
         if (bgmVolumeSlider != null) bgmVolumeSlider.value = 1.0f;
         if (sfxVolumeSlider != null) sfxVolumeSlider.value = 1.0f;
         if (fullscreenToggle != null) fullscreenToggle.isOn = true;
-        if (vsyncToggle != null) vsyncToggle.isOn = false;
+        if (vsyncToggle != null) vsyncToggle.isOn = true;
 
         SaveSettingsToJsonFile();
         Debug.Log("[SettingManager] คืนค่าการตั้งค่ากลับสู่ค่าเริ่มต้นเรียบร้อยแล้ว");

@@ -22,6 +22,12 @@ public class PlayerMovementCS : MonoBehaviour
     private void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
+        if (rb != null)
+        {
+            // เปิดใช้งาน Rigidbody Interpolation เพื่อให้การเคลื่อนที่และการติดตามของกล้องราบรื่นที่สุด
+            // ป้องกันปัญหาภาพขาด/ภาพสั่นเป็นวุ้น (Micro-stuttering & Jitter) ระหว่างรอบฟิสิกส์กับรอบเรนเดอร์
+            rb.interpolation = RigidbodyInterpolation2D.Interpolate;
+        }
         playerHealth = GetComponent<PlayerHealthCS>();
     }
 
