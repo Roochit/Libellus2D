@@ -59,6 +59,9 @@ public class SettingManagerCS : MonoBehaviour
     [Tooltip("Toggle สลับโหมดเต็มจอ Fullscreen")]
     [SerializeField] private Toggle fullscreenToggle;
 
+    [Tooltip("ซ่อน UI โหมดเต็มจอไว้ก่อนชั่วคราวตามคำขอ")]
+    [SerializeField] private bool hideFullscreenUI = true;
+
     [Tooltip("Dropdown เลือกความละเอียดหน้าจอ (Resolution)")]
     [SerializeField] private TMP_Dropdown resolutionDropdown;
 
@@ -214,6 +217,42 @@ public class SettingManagerCS : MonoBehaviour
                     }
                 }
             }
+
+            if (hideFullscreenUI)
+            {
+                HideFullscreenToggleUI();
+            }
+        }
+    }
+
+    /// <summary>
+    /// ซ่อน UI ส่วนควบคุม Fullscreen ไว้ก่อนชั่วคราวตามคำขอ เพื่อป้องกันบั๊กการแสดงผล
+    /// </summary>
+    public void HideFullscreenToggleUI()
+    {
+        if (fullscreenToggle != null)
+        {
+            fullscreenToggle.gameObject.SetActive(false);
+            if (fullscreenToggle.transform.parent != null && 
+                fullscreenToggle.transform.parent.name.IndexOf("fullscreen", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                fullscreenToggle.transform.parent.gameObject.SetActive(false);
+            }
+        }
+
+        if (settingsPanel != null)
+        {
+            Transform[] allChildren = settingsPanel.GetComponentsInChildren<Transform>(true);
+            foreach (var child in allChildren)
+            {
+                if (child == null) continue;
+                string cName = child.name;
+                if (cName.IndexOf("fullscreen", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                    cName.IndexOf("fullsccreen", StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    child.gameObject.SetActive(false);
+                }
+            }
         }
     }
 
@@ -326,8 +365,14 @@ public class SettingManagerCS : MonoBehaviour
         if (sfxVolumeSlider != null) sfxVolumeSlider.value = currentSettingData.sfxVolume;
 
         // 4. ปรับใช้การแสดงผล
-        SetFullscreenInternal(currentSettingData.isFullscreen);
-        if (fullscreenToggle != null) fullscreenToggle.isOn = currentSettingData.isFullscreen;
+        if (hideFullscreenUI)
+        {
+            HideFullscreenToggleUI();
+        }
+        else
+        {
+            if (fullscreenToggle != null) fullscreenToggle.isOn = currentSettingData.isFullscreen;
+        }
 
         SetVSyncInternal(currentSettingData.isVSync);
         if (vsyncToggle != null) vsyncToggle.isOn = currentSettingData.isVSync;
@@ -338,7 +383,12 @@ public class SettingManagerCS : MonoBehaviour
             int savedResIndex = Mathf.Clamp(currentSettingData.resolutionIndex, 0, filteredResolutions.Count - 1);
             resolutionDropdown.value = savedResIndex;
             resolutionDropdown.RefreshShownValue();
-            SetResolutionIndexInternal(savedResIndex);
+
+            // บันทึกค่าลง Data แต่ไม่สั่ง Screen.SetResolution ซ้ำๆ ในตอนโหลดฉาก
+            // เพื่อป้องกัน macOS เด้งหลุดจากโหมดเต็มจอทุกครั้งที่เปลี่ยนฉาก
+            Resolution res = filteredResolutions[savedResIndex];
+            currentSettingData.resolutionWidth = res.width;
+            currentSettingData.resolutionHeight = res.height;
         }
     }
 
@@ -477,7 +527,36 @@ public class SettingManagerCS : MonoBehaviour
         if (filteredResolutions.Count == 0 || index < 0 || index >= filteredResolutions.Count) return;
 
         Resolution res = filteredResolutions[index];
-        Screen.SetResolution(res.width, res.height, Screen.fullScreen);
+        int targetWidth = res.width;
+        int targetHeight = res.height;
+
+        // หากอยู่ในโหมดหน้าต่าง (Windowed) บนจอที่เล็กกว่า เช่น หน้าจอ MacBook Air/Pro
+        // ป้องกันหน้าต่างล้นขอบจอด้วยการจำกัดความสูงไม่ให้เกินพื้นที่การทำงานของหน้าจอ
+        if (!Screen.fullScreen)
+        {
+            int maxAllowedWidth = Mathf.Max(960, Screen.currentResolution.width - 80);
+            int maxAllowedHeight = Mathf.Max(540, Screen.currentResolution.height - 120);
+
+            if (targetWidth > maxAllowedWidth || targetHeight > maxAllowedHeight)
+            {
+                float aspect = (float)res.width / res.height;
+                if (targetHeight > maxAllowedHeight)
+                {
+                    targetHeight = maxAllowedHeight;
+                    targetWidth = Mathf.RoundToInt(targetHeight * aspect);
+                }
+                if (targetWidth > maxAllowedWidth)
+                {
+                    targetWidth = maxAllowedWidth;
+                    targetHeight = Mathf.RoundToInt(targetWidth / aspect);
+                }
+            }
+        }
+
+        if (Screen.width != targetWidth || Screen.height != targetHeight)
+        {
+            Screen.SetResolution(targetWidth, targetHeight, Screen.fullScreen);
+        }
 
         currentSettingData.resolutionIndex = index;
         currentSettingData.resolutionWidth = res.width;
@@ -538,6 +617,10 @@ public class SettingManagerCS : MonoBehaviour
         if (settingsPanel != null)
         {
             settingsPanel.SetActive(true);
+            if (hideFullscreenUI)
+            {
+                HideFullscreenToggleUI();
+            }
         }
 
         if (homeMenuPanel != null)

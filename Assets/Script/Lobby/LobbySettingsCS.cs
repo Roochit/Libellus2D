@@ -37,12 +37,15 @@ public class LobbySettingsCS : MonoBehaviour
             volumeSlider.value = savedVolume;
         }
 
-        // 2. โหลดโหมดเต็มจอ
-        bool isFullscreen = PlayerPrefs.GetInt(FULLSCREEN_KEY, Screen.fullScreen ? 1 : 0) == 1;
-        Screen.fullScreen = isFullscreen;
+        // 2. ซ่อน UI Fullscreen Toggle ไว้ก่อนชั่วคราว และไม่สั่งเปลี่ยนสถานะจอซ้ำเพื่อป้องกัน macOS เด้งหลุด
         if (fullscreenToggle != null)
         {
-            fullscreenToggle.isOn = isFullscreen;
+            fullscreenToggle.gameObject.SetActive(false);
+            if (fullscreenToggle.transform.parent != null && 
+                fullscreenToggle.transform.parent.name.IndexOf("fullscreen", System.StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                fullscreenToggle.transform.parent.gameObject.SetActive(false);
+            }
         }
     }
 

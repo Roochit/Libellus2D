@@ -82,9 +82,17 @@ public class LobbyManagerCS : MonoBehaviour
         AudioListener.volume = savedVol;
         if (volumeSlider != null) volumeSlider.value = savedVol;
 
-        bool isFull = PlayerPrefs.GetInt(FULLSCREEN_KEY, Screen.fullScreen ? 1 : 0) == 1;
-        Screen.fullScreen = isFull;
-        if (fullscreenToggle != null) fullscreenToggle.isOn = isFull;
+        // ปิดการสั่ง Screen.fullScreen ซ้ำๆ ใน Start เพื่อป้องกัน macOS เด้งหลุดจากโหมดเต็มจอ
+        // และซ่อน UI Fullscreen Toggle ไว้ก่อนชั่วคราว
+        if (fullscreenToggle != null)
+        {
+            fullscreenToggle.gameObject.SetActive(false);
+            if (fullscreenToggle.transform.parent != null && 
+                fullscreenToggle.transform.parent.name.IndexOf("fullscreen", System.StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                fullscreenToggle.transform.parent.gameObject.SetActive(false);
+            }
+        }
 
         // ติดตั้งเอฟเฟกต์สีปุ่มเป็นสีขาวเมื่อเมาส์ชี้ (Hover) บนทุกปุ่มในล็อบบี้
         if (autoApplyButtonHoverWhite)
